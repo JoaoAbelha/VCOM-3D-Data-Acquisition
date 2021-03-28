@@ -91,7 +91,7 @@ def distance_from_two_lines(v1, v2, r1, r2):
 # this function only has dummy values for now
 def light_calibration(position):
     # 0. Get two images with the pencil
-    pencil = cv.imread('./pencil.jpg')
+    pencil = cv.imread('./imgs/pencil.jpg')
     pencil = cv.resize(pencil, (300, 300))
     # 1. Having the camara position find a point in the image plane that we want
         #getTwoPointsOfInterest(pencil)
