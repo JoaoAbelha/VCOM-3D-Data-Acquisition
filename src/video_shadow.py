@@ -19,6 +19,7 @@ def processImage(frame_n):
 
     frame_n = cv2.GaussianBlur(frame_n,(5,5),0)
     frame_n = cv2.resize(frame_n,(width,height))
+    
     original = frame_n
 
     if frame_0 is None:
@@ -41,7 +42,7 @@ def processImage(frame_n):
     ret3 = np.concatenate((thresh_n, thresh_absdiff), axis=1)
     
     ret = np.concatenate((ret1, ret2,ret3), axis=0)
-    return ret
+    return shadow , ret
 
 
 y_top = 5
@@ -81,10 +82,10 @@ while(cap.isOpened()):
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    img = processImage(gray)
-    cv2.imshow('frame',img)
-    #points = get_points(img)
-    #print(points)
+    img , imgs = processImage(gray)
+    cv2.imshow('frame',imgs)
+    points = get_points(img)
+    print(points)
 
     key = cv2.waitKey(0)
     while key not in [ord('q'), ord('k')]:
