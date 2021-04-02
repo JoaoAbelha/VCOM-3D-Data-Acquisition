@@ -2,9 +2,12 @@ import cv2
 import numpy as np
 from step2 import camera_position
 from utils import gaussMethod
+from step5 import getPoints, processImage
+
+DEFAUL_SHADHOW_PLANE = npm.matrix([0, 0, 0, 0], [0, 0, 0, 0], [1, 0, 0, 0])
 
 
-def calculate3DPoints(i, j, ip, projectionMatrix, shadowPlane=[]):
+def calculate3DPoint(i, j, ip, projectionMatrix, shadowPlane=DEFAUL_SHADHOW_PLANE):
     firstEquation = np.array([
         projectionMatrix[2][0] * i - projectionMatrix[0][0],
         projectionMatrix[2][1] * i - projectionMatrix[0][1],
@@ -20,19 +23,30 @@ def calculate3DPoints(i, j, ip, projectionMatrix, shadowPlane=[]):
     ])
 
     thirdEquation = np.array([
-        shadowPlane[3][1] * ip - shadowPlane[1][1],
-        shadowPlane[3][2] * ip - shadowPlane[1][2],
-        shadowPlane[3][3] * ip - shadowPlane[1][3],
-        shadowPlane[1][4] - shadowPlane[3][4] * ip
+        shadowPlane[2][0] * ip - shadowPlane[0][0],
+        shadowPlane[2][1] * ip - shadowPlane[0][1],
+        shadowPlane[2][2] * ip - shadowPlane[0][2],
+        shadowPlane[0][3] - shadowPlane[2][3] * ip
     ])
 
     equations = np.matrix([firstEquation, secondEquation, thirdEquation])
     # solve the system of equations
     gaussResult = gaussMethod(equations)
     # return the x,y and z values obtained by solving the system of equations
-    return np.array([gaussResult[0][3], gaussResult[1][3], gaussResult[2][3]])
+    return np.array([[gaussResult[0][3], gaussResult[1][3], gaussResult[2][3]]])
 
 
-img = cv2.imread('./calibration/GOPR0032.jpg')
+def shadow3DPoints(points, projectionMatrix):
+    points3D = np.array([])
+    for p in points:
+        point3D = calculate3DPoints(p[1], p[2], 1, projectionMatrix)
+        points3D = np.append(points3D, point3D)
+    return points3D
+
+
+frame_0 = cv2.imread('./imgs/charger_0.jpg', 0)
+processed = processImage(frame_0, frame)
+points1 = getPoints(processed, "horizontal", "down")
+
 projectionMatrix = camera_position(img)[1]
-calculate3DPoints(315, 5, projectionMatrix)
+shadow3DPoints(points1, projectionMatrix)
