@@ -74,4 +74,4 @@ def camera_position(img):
         print('normalize real world position (X,Y,Z)= ({}, {}, {})'.format(position_normalized[0,0], position_normalized[1,0], position_normalized[2,0]))
         print('projection matrix : ')
         print(getProjectionMatrix(mtx, rvec, tvec))
-        return position_normalized
+        return (position_normalized, getProjectionMatrix(mtx, rvec, tvec))
