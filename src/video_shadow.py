@@ -14,10 +14,13 @@ clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8,8))
 width = 360
 height = 200
 
+def toGray(img):
+    return cv2.cvtColor(img,cv2.COLOR_GRAY2BGR)
+
 def processImage(frame_n):
     global frame_0,frame_n_1
 
-    frame_n = cv2.GaussianBlur(frame_n,(5,5),0)
+    frame_n = cv2.GaussianBlur(frame_n,(7,7),1)
     frame_n = cv2.resize(frame_n,(width,height))
     
     original = frame_n
@@ -30,18 +33,26 @@ def processImage(frame_n):
     ret, absdiff_thresh = cv2.threshold(absdiff,40,255,cv2.THRESH_BINARY)
 
     ret,thresh_0 = cv2.threshold(frame_0,150,255,cv2.THRESH_BINARY_INV)
-    ret,thresh_n = cv2.threshold(frame_n,150,255,cv2.THRESH_BINARY_INV)   
+    ret,thresh_n = cv2.threshold(frame_n,150,255,cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)   
 
     thresh_absdiff = cv2.absdiff(thresh_0,thresh_n)
     shadow = cv2.bitwise_and(absdiff_thresh , thresh_absdiff)
     
     #shadow = cv2.morphologyEx(shadow, cv2.MORPH_ERODE, (11,11),2)
     #frame_0 = frame_n
-    ret1 = np.concatenate((original, shadow), axis=1)
-    ret2 = np.concatenate((absdiff, absdiff_thresh), axis=1)
-    ret3 = np.concatenate((thresh_n, thresh_absdiff), axis=1)
+
+    points = get_points(absdiff_thresh)
+    line = np.zeros((height,width,3), np.uint8)
+    for p in points:
+        line[p[1]][p[0]] = (0,0,255)
+
+    ret1 = np.concatenate((toGray(original), toGray(shadow)), axis=1)
+    ret2 = np.concatenate((toGray(absdiff), toGray(absdiff_thresh)), axis=1)
+    ret3 = np.concatenate((toGray(thresh_0), toGray(thresh_n)), axis=1)
+    ret4 = np.concatenate((toGray(thresh_absdiff), line), axis=1)
     
-    ret = np.concatenate((ret1, ret2,ret3), axis=0)
+    
+    ret = np.concatenate((ret1, ret2, ret3, ret4), axis=0)
     return shadow , ret
 
 
@@ -80,12 +91,15 @@ def get_points(img):
 while(cap.isOpened()):
     ret, frame = cap.read()
 
+    if frame is None:
+        break
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     img , imgs = processImage(gray)
     cv2.imshow('frame',imgs)
-    points = get_points(img)
-    print(points)
+    #points = get_points(img)
+    #print(points)
 
     key = cv2.waitKey(0)
     while key not in [ord('q'), ord('k')]:
