@@ -1,8 +1,12 @@
-from step2 import camera_position 
+from step2 import camera_position, readIntrinsicParameters
+from step1 import camera_calibration
 import cv2 as cv
 import numpy as np
 
 REAL_PENCIL_HEIGHT_MM = 105
+
+cursor_held = False
+cursor_position = None
 
 def find_point(img_foreground, imga, nr):
     img_foreground  = cv.GaussianBlur(img_foreground, (5, 5), 0)
@@ -88,11 +92,42 @@ def distance_from_two_lines(v1, v2, r1, r2):
     
     return d
 
+# mouse callback function
+def handler(event,x,y,flags,param):
+    global cursor_held,cursor_position
+    if event == cv.EVENT_LBUTTONUP and cursor_held:
+        cursor_held = False
+    if event == cv.EVENT_LBUTTONDOWN and not cursor_held:
+        cursor_held = True
+        cursor_position = (x,y,0)
+        print("Set position")
+
+def plane_adjustments():
+    global cursor_position
+    print("Point to the new origin point")
+    orig_height, orig_width, _ = img.shape
+    new_size = 700 / orig_width
+    imgb = cv.resize(img,(int(new_size * orig_width), int(new_size * orig_height)))
+    cursor_position = None
+    while cursor_position is None:
+        cv.namedWindow('interactive')
+        cv.setMouseCallback('interactive', handler)
+        cv.imshow('interactive', imgb)
+        cv.waitKey()
+        cv.destroyAllWindows()
+    print("Cursor position {}".format(str(cursor_position)))
+    u = cursor_position[0] - new_size * orig_width / 2
+    v = cursor_position[1] - new_size * orig_height / 2
+    uv = np.array([[cursor_position[0] / new_size,cursor_position[1] / new_size,1]], dtype=np.float32).T
+    world_position_aux = np.linalg.inv(mtx).dot(uv) - tvec
+    world_position = np.linalg.inv(np.matrix(rotM)).dot(world_position_aux)
+    print("World position {}".format(str(world_position)))
+
 # this function only has dummy values for now
 def light_calibration(position):
     # 0. Get two images with the pencil
-    pencil = cv.imread('./imgs/pencil.jpg')
-    pencil = cv.resize(pencil, (300, 300))
+    pencil = cv.imread('./imgs/alternate/Untitled_000001.png')
+    
     # 1. Having the camara position find a point in the image plane that we want
         #getTwoPointsOfInterest(pencil)
 
@@ -107,6 +142,7 @@ def light_calibration(position):
 
     # 6. if we want better results we can use more than one image
 
-#img = cv.imread('./calibration/GOPR0032.jpg')
-#position = camera_position(img)
-light_calibration(1)
+(mtx, dist) = readIntrinsicParameters()
+img = cv.imread('./imgs/alternate3/i_000000.png')
+position, rvec, tvec, rotM = camera_position(img)
+plane_adjustments()

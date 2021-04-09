@@ -6,14 +6,14 @@ import pickle
 ############# intrinsic parameters ##################
 # this will enable us to correct the distortions
 
-IMAGES_PATH_EXPRESSION = './calibration/*.jpg'
-PATTERN_SIZE = (8, 6)
-CHECKBOARD_SIZE = (8, 6)
+IMAGES_PATH_EXPRESSION = './calibration/alternate/*.png'
+PATTERN_SIZE = (9, 6)
+CHECKBOARD_SIZE = (9, 6)
 FIELD_SIZE = 15 # it can represented in mm. For squares
 TERMINATION_CRITERIA = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
 SHOW_IMAGES = False
-PATH_SAVE_INTRINSIC_PARAMS = "calibration/wide_dist_pickle.p"
-SAVE_PARAMETERS = False
+PATH_SAVE_INTRINSIC_PARAMS = "./calibration/alternate/wide_dist_pickle.p"
+SAVE_PARAMETERS = True
 
 # if we are going to the always the same with the same camera we can save the values to use later
 def save_intrinsicParameters(mtx, dist):
