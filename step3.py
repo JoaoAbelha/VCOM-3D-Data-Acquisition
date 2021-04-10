@@ -173,23 +173,18 @@ def plane_adjustments(image):
     return plane1,plane2,plane3
 
 # this function only has dummy values for now
-def light_calibration(position):
-    # 0. Get two images with the pencil
-    pencil = cv.imread('./imgs/alternate/Untitled_000001.png')
-    
-    # 1. Having the camara position find a point in the image plane that we want
-        #getTwoPointsOfInterest(pencil)
+def light_calibration(frame):
+    image = cv.imread('./imgs/alternate/i ({}).png'.format(frame))
+    cv.imshow("img", image)
 
-    # 2. Intersect that point with the z = 0 plane (get K , Ts and T (K + h)), h is known (http://nghiaho.com/?page_id=363)
-        # not sure se aqui podemos usar tb o triangulatePoints
-    print(intersection((1,0,1), (0,1,0), 0, 0, 1, 0))
-    # 3. Calculate the line equation for Ts and T for an image (this step is not needed we can place the points in 5 => vector + point)
-    # 4. Repeat step3 for the other image
-    # 5. uses square difference to get the intersection point
-    d = distance_from_two_lines([1,1,2] , [1,1,3], [0,2,-1], [1,0,-1])
-    print(abs(d))
+    # Difference between the control image and the frame being analised
 
-    # 6. if we want better results we can use more than one image
+    # Thinning of the scan line
+
+    # Choose three random points that are a part of the background
+
+    # Calculate the shadow plane
+
 
 (mtx, dist) = readIntrinsicParameters()
 img = cv.imread('./imgs/alternate3/checkerboard.png')
@@ -198,3 +193,8 @@ flat_camera_position = np.squeeze(np.asarray(r_camera_position))
 
 planes = cv.imread('./imgs/alternate3/planes.png')
 plane1, plane2, plane3 = plane_adjustments(planes)
+
+control_image = cv.imread('./imgs/alternate3/i (1).png')
+light_calibration(13)
+#for i in range(2, 2):  
+#    light_calibration(i)
