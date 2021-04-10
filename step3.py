@@ -5,6 +5,9 @@ import numpy as np
 
 REAL_PENCIL_HEIGHT_MM = 105
 
+FOREGROUND_THRESHOLD = 127
+BACKGROUND_THRESHOLD = 127
+
 cursor_held = False
 cursor_position = None
 
@@ -118,13 +121,7 @@ def getUVcoords(img):
     uv = np.array([[cursor_position[0] / new_size,cursor_position[1] / new_size,1]], dtype=np.float32).T
     return uv
 
-#returns the A, B, C, and D components of a plane that's perpendicular to x = 0 and contains the points passed as arguments
-def get_perpendicular_plane(point1, point2):
-    p1, p2 = np.array(point1), np.array(point2)
-    p3 = np.copy(p2)
-    print(" {}".format(str(p3)))
-    p3[0] += 1
-
+def calculate_plane(p1, p2, p3):
     vector12 = p2 - p1
     vector12 = vector12 / np.linalg.norm(vector12)
     vector23 = p3 - p2
@@ -137,11 +134,19 @@ def get_perpendicular_plane(point1, point2):
 
     return [A,B,C,D]
 
+#returns the A, B, C, and D components of a plane that's perpendicular to x = 0 and contains the points passed as arguments
+def get_perpendicular_plane(point1, point2):
+    p1, p2 = np.array(point1), np.array(point2)
+    p3 = np.copy(p2)
+    print(" {}".format(str(p3)))
+    p3[0] += 1
+
+    return calculate_plane(p1,p2,p3)
 
 def plane_adjustments(image):
     print("Point to the intersection of the three planes")
     uv = getUVcoords(image)
-    position_aux = np.linalg.inv(mtx).dot(uv) - tvec
+    position_aux = np.linalg.inv(mtx).dot(uv) #- tvec
     image_plane_position = np.linalg.inv(np.matrix(rotM)).dot(position_aux)
     flat_image_position = np.squeeze(np.asarray(image_plane_position))
     print("Image plane position {}".format(str(flat_image_position)))
@@ -172,6 +177,22 @@ def plane_adjustments(image):
 
     return plane1,plane2,plane3
 
+def decompose_image(background, foreground):
+    bg_grey = cv.cvtColor(background, cv.COLOR_BGR2GRAY)
+    _, bg_mask_aux = cv.threshold(bg_grey, BACKGROUND_THRESHOLD, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
+    
+    fg = cv.cvtColor(foreground, cv.COLOR_BGR2GRAY)
+    difference = cv.subtract(background,foreground)
+
+    diff_grey = cv.cvtColor(difference, cv.COLOR_BGR2GRAY)
+    diff_eq = cv.equalizeHist(diff_grey)
+    _, diff_mask_aux = cv.threshold(diff_eq, FOREGROUND_THRESHOLD, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
+
+    bg_mask = cv.bitwise_and(bg_mask_aux, bg_mask_aux, mask = cv.bitwise_not(diff_mask_aux))
+
+    return bg_mask_aux, bg_mask
+
+
 # this function only has dummy values for now
 def light_calibration(frame):
     image = cv.imread('./imgs/alternate/i ({}).png'.format(frame))
@@ -187,14 +208,15 @@ def light_calibration(frame):
 
 
 (mtx, dist) = readIntrinsicParameters()
-img = cv.imread('./imgs/alternate3/checkerboard.png')
+img = cv.imread('./imgs/alternate4/checkerboard.png')
 camera_position, rvec, tvec, rotM, r_camera_position = camera_position(img)
 flat_camera_position = np.squeeze(np.asarray(r_camera_position))
 
-planes = cv.imread('./imgs/alternate3/planes.png')
-plane1, plane2, plane3 = plane_adjustments(planes)
+planes = cv.imread('./imgs/alternate4/planes.png')
+#plane1, plane2, plane3 = plane_adjustments(planes)
 
-control_image = cv.imread('./imgs/alternate3/i (1).png')
-light_calibration(13)
+control_image = cv.imread('./imgs/alternate4/i (1).png')
+bg_mask, fg_mask = decompose_image(planes, control_image)
+#light_calibration(13)
 #for i in range(2, 2):  
 #    light_calibration(i)
