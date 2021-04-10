@@ -72,4 +72,4 @@ def camera_position(img):
         print('real world position (X,Y,Z)= ({}, {}, {})'.format(real_word_position[0,0], real_word_position[1,0], real_word_position[2,0]))
         # we can normalize the point: focal length = 1 and moves the origin to the centre of the image
         print('normalize real world position (X,Y,Z)= ({}, {}, {})'.format(position_normalized[0,0], position_normalized[1,0], position_normalized[2,0]))
-        return position_normalized, rvec, tvec, rotM
+        return position_normalized, rvec, tvec, rotM, real_word_position

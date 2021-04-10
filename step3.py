@@ -69,9 +69,7 @@ def intersection(p, q, a, b, c, d):
     
     t = - ( a*px + b*py + c*pz + d ) / denom
 
-    return {
-        'x': (px+t*(qx-px)), 'y': (py+t*(qy-py)), 'z': (pz+t*(qz-pz))
-    }
+    return [px+t*(qx-px), py+t*(qy-py), pz+t*(qz-pz)]
 
 # calculates the minimum distance between two lines
 # line1 => vector (v1) and a point (r1)
@@ -102,26 +100,77 @@ def handler(event,x,y,flags,param):
         cursor_position = (x,y,0)
         print("Set position")
 
-def plane_adjustments():
+def getUVcoords(img):
     global cursor_position
-    print("Point to the new origin point")
     orig_height, orig_width, _ = img.shape
-    new_size = 700 / orig_width
+    new_size = 1200 / orig_width
     imgb = cv.resize(img,(int(new_size * orig_width), int(new_size * orig_height)))
     cursor_position = None
     while cursor_position is None:
         cv.namedWindow('interactive')
         cv.setMouseCallback('interactive', handler)
         cv.imshow('interactive', imgb)
-        cv.waitKey()
-        cv.destroyAllWindows()
+        cv.waitKey(1)
+    cv.destroyAllWindows()
     print("Cursor position {}".format(str(cursor_position)))
     u = cursor_position[0] - new_size * orig_width / 2
     v = cursor_position[1] - new_size * orig_height / 2
     uv = np.array([[cursor_position[0] / new_size,cursor_position[1] / new_size,1]], dtype=np.float32).T
-    world_position_aux = np.linalg.inv(mtx).dot(uv) - tvec
-    world_position = np.linalg.inv(np.matrix(rotM)).dot(world_position_aux)
-    print("World position {}".format(str(world_position)))
+    return uv
+
+#returns the A, B, C, and D components of a plane that's perpendicular to x = 0 and contains the points passed as arguments
+def get_perpendicular_plane(point1, point2):
+    p1, p2 = np.array(point1), np.array(point2)
+    p3 = np.copy(p2)
+    print(" {}".format(str(p3)))
+    p3[0] += 1
+
+    vector12 = p2 - p1
+    vector12 = vector12 / np.linalg.norm(vector12)
+    vector23 = p3 - p2
+    vector23 = vector23 / np.linalg.norm(vector23)
+
+    normal = np.cross(vector12, vector23)
+
+    A,B,C = [normal[i] for i in range(0,len(normal))]
+    D = A*p1[0] + B*p1[1] + C*p1[2]
+
+    return [A,B,C,D]
+
+
+def plane_adjustments(image):
+    print("Point to the intersection of the three planes")
+    uv = getUVcoords(image)
+    position_aux = np.linalg.inv(mtx).dot(uv) - tvec
+    image_plane_position = np.linalg.inv(np.matrix(rotM)).dot(position_aux)
+    flat_image_position = np.squeeze(np.asarray(image_plane_position))
+    print("Image plane position {}".format(str(flat_image_position)))
+    vertex_position = intersection(flat_image_position,flat_camera_position,1,0,0,0)
+    print("World position {}".format(str(vertex_position)))
+
+    print("Point to the intersection between the x = 0 plane and a second plane")
+    uv = getUVcoords(image)
+    position_aux = np.linalg.inv(mtx).dot(uv) - tvec
+    image_plane_position = np.linalg.inv(np.matrix(rotM)).dot(position_aux)
+    flat_image_position = np.squeeze(np.asarray(image_plane_position))
+    print("Image plane position {}".format(str(flat_image_position)))
+    intersection1_position = intersection(flat_image_position,flat_camera_position,1,0,0,0)
+    print("World position {}".format(str(intersection1_position)))
+
+    print("Point to the intersection between the x = 0 plane and a third plane")
+    uv = getUVcoords(image)
+    position_aux = np.linalg.inv(mtx).dot(uv) - tvec
+    image_plane_position = np.linalg.inv(np.matrix(rotM)).dot(position_aux)
+    flat_image_position = np.squeeze(np.asarray(image_plane_position))
+    print("Image plane position {}".format(str(flat_image_position)))
+    intersection2_position = intersection(flat_image_position,flat_camera_position,1,0,0,0)
+    print("World position {}".format(str(intersection2_position)))
+
+    plane1 = [1,0,0,0]  # x = 0
+    plane2 = get_perpendicular_plane(vertex_position, intersection1_position)
+    plane3 = get_perpendicular_plane(vertex_position, intersection2_position)
+
+    return plane1,plane2,plane3
 
 # this function only has dummy values for now
 def light_calibration(position):
@@ -143,6 +192,9 @@ def light_calibration(position):
     # 6. if we want better results we can use more than one image
 
 (mtx, dist) = readIntrinsicParameters()
-img = cv.imread('./imgs/alternate3/i_000000.png')
-position, rvec, tvec, rotM = camera_position(img)
-plane_adjustments()
+img = cv.imread('./imgs/alternate3/checkerboard.png')
+camera_position, rvec, tvec, rotM, r_camera_position = camera_position(img)
+flat_camera_position = np.squeeze(np.asarray(r_camera_position))
+
+planes = cv.imread('./imgs/alternate3/planes.png')
+plane1, plane2, plane3 = plane_adjustments(planes)
