@@ -24,7 +24,7 @@ def sobelFilter():
 
     # applying a gaussian blur: it makes disappear noise mainly due to texture and maybe light
     # the bigger the less noise but if is too big we may lose some edges
-    blur = cv2.GaussianBlur(imgSudoku,(31,31),0)
+    blur = cv2.GaussianBlur(img,(31,31),0)
 
     gray_temp = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
     gray = cv2.adaptiveThreshold(gray_temp,255,cv2.ADAPTIVE_THRESH_MEAN_C,\
@@ -65,10 +65,11 @@ def cannyFilter():
         upper = cv2.getTrackbarPos('upper', 'canny')
 
         edges = cv2.Canny(img, lower, upper)
+        imS = ResizeWithAspectRatio(edges, width=400)
 
         # display images
-        cv2.imshow('original', img)
-        cv2.imshow('canny', edges)
+        #cv2.imshow('original', img)
+        cv2.imshow('canny', imS)
         k = cv2.waitKey(1) & 0xFF
         if k == 27:   # hit escape to quit
             break
@@ -274,7 +275,7 @@ def grabcut():
 
 
 #sobelFilter()
-#cannyFilter()
+cannyFilter()
 #edgeDetection()
 #houghTransform()
 #segmentationThreshold()
