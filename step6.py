@@ -2,7 +2,6 @@ import cv2
 import numpy as np
 from step2 import camera_position
 from utils import gaussMethod
-from step5 import getPoints, processImage
 
 DEFAUL_SHADHOW_PLANE = np.array([1, 0, 0, 0])
 
@@ -22,16 +21,17 @@ def calculate3DPoint(i, j, projectionMatrix, shadowPlane=DEFAUL_SHADHOW_PLANE):
         projectionMatrix[1][3] - projectionMatrix[2][3] * j
     ])
 
-    equations = np.matrix([firstEquation, secondEquation, shadowPlane])
+    equations = np.array([firstEquation, secondEquation, shadowPlane])
     # solve the system of equations
     gaussResult = gaussMethod(equations)
     # return the x,y and z values obtained by solving the system of equations
-    return np.array([[gaussResult[0][3], gaussResult[1][3], gaussResult[2][3]]])
+    return [gaussResult[0][3], gaussResult[1][3], gaussResult[2][3]]
 
 
 def shadow3DPoints(points, projectionMatrix, shadowPlane=DEFAUL_SHADHOW_PLANE):
-    shadowPoints3D = np.array([])
+    shadowPoints3D = []
     for p in points:
-        point3D = calculate3DPoint(p[1], p[2], 1, projectionMatrix)
-        shadowPoints3D = np.append(shadowPoints3D, point3D)
+        point3D = calculate3DPoint(p[0], p[1], projectionMatrix)
+        #shadowPoints3D = np.append(shadowPoints3D, point3D)
+        shadowPoints3D.append(point3D)
     return shadowPoints3D

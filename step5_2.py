@@ -87,3 +87,4 @@ def getShadowPoints(frame):
                 points.append((x,y))
                 break
     return points
+    

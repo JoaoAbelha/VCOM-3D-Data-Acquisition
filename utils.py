@@ -27,7 +27,7 @@ def gaussMethod(m):
             if i != j:
                 m = rowOperation(m, j, i, m[j][i])
     # check column to see intersection
-    print(m)
+    return m
 
 
 gaussMethod([
