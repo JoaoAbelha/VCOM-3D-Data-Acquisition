@@ -107,6 +107,6 @@ def light_calibration(position):
 
     # 6. if we want better results we can use more than one image
 
-#img = cv.imread('./calibration/GOPR0032.jpg')
-#position = camera_position(img)
-light_calibration(1)
+img = cv.imread('./calibration/GOPR0032.jpg')
+position = camera_position(img)
+#light_calibration(1)

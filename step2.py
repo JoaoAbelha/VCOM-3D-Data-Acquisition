@@ -2,6 +2,7 @@
 import pickle
 import cv2 as cv
 import numpy as np
+from utils import getProjectionMatrix
 
 AXIS_SIZE = 3
 SHOW_AXIS_IMAGE = False
@@ -63,11 +64,14 @@ def camera_position(img):
             cv.waitKey()
             cv.destroyAllWindows()
 
+    
         rotM = cv.Rodrigues(rvec)[0]
-
         real_word_position = -np.matrix(rotM).T * np.matrix(tvec)
         position_normalized = np.linalg.inv(mtx) * real_word_position
+
         print('real world position (X,Y,Z)= ({}, {}, {})'.format(real_word_position[0,0], real_word_position[1,0], real_word_position[2,0]))
         # we can normalize the point: focal length = 1 and moves the origin to the centre of the image
         print('normalize real world position (X,Y,Z)= ({}, {}, {})'.format(position_normalized[0,0], position_normalized[1,0], position_normalized[2,0]))
-        return position_normalized
+        print('projection matrix : ')
+        print(getProjectionMatrix(mtx, rvec, tvec))
+        return (position_normalized, getProjectionMatrix(mtx, rvec, tvec))
