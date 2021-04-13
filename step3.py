@@ -2,6 +2,7 @@ from step2 import camera_position, readIntrinsicParameters
 from step1 import camera_calibration
 import cv2 as cv
 import numpy as np
+import random as rng
 
 REAL_PENCIL_HEIGHT_MM = 105
 
@@ -143,33 +144,100 @@ def get_perpendicular_plane(point1, point2):
 
     return calculate_plane(p1,p2,p3)
 
+def project_image_point_to_plane(point, plane):
+    position_aux = np.linalg.inv(mtx).dot(point) #- tvec
+    image_plane_position = np.linalg.inv(np.matrix(rotM)).dot(position_aux)
+    flat_image_position = np.squeeze(np.asarray(image_plane_position))
+    print("Image plane position {}".format(str(flat_image_position)))
+    world_position = intersection(flat_image_position,flat_camera_position,plane[0], plane[1], plane[2], plane[3])
+    print("World position {}".format(str(world_position)))
+    return world_position
+
+def plane_adjustments_alt(image, mask):
+    edges = cv.Canny(image, 60, 75)
+    cv.imshow("edges", edges)
+    edges_filtered = cv.bitwise_and(edges, edges, mask = mask)
+    cv.imshow("edges filtered", edges_filtered)
+    cv.waitKey(0)
+
+    ### finding contours, can use connectedcomponents aswell
+    contours, hierarchy = cv.findContours(edges_filtered, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    # Draw contours
+    drawing = np.zeros((edges_filtered.shape[0], edges_filtered.shape[1], 3), dtype=np.uint8)
+    for i in range(len(contours)):
+        color = (rng.randint(0,256), rng.randint(0,256), rng.randint(0,256))
+        cv.drawContours(drawing, contours, i, color, 2, cv.LINE_8, hierarchy, 0)
+
+    cv.imshow("image", drawing)
+    cv.waitKey(0)
+
+    print(len(contours))
+    #Choose the first pair of points
+    contour_planes = np.zeros((len(contours),4),dtype=np.float32)
+    for i in range(len(contours)):
+        contour = contours[i].copy()
+        if len(contour) < 2:
+            continue
+
+        print(contour)
+        index_a = rng.randint(0, len(contour) - 1)
+        print(index_a)
+        print(contour[index_a])
+        print(contour[index_a][0])
+        im_point_a = contour[index_a][0]
+        point_a = np.array([[im_point_a[0] / image.shape[0],im_point_a[1] / image.shape[1],1]], dtype=np.float32).T
+        contour = np.delete(contour, index_a, 0)
+        print(contour)
+
+        index_b = rng.randint(0, len(contour) - 1)
+        print(index_b)
+        print(contour[index_b])
+        print(contour[index_b][0])
+        im_point_b = contour[index_b][0]
+        point_b = np.array([[im_point_b[0] / image.shape[0],im_point_b[1] / image.shape[1],1]], dtype=np.float32).T
+
+        world_point_a = project_image_point_to_plane(point_a, [1,0,0,0])
+        world_point_b = project_image_point_to_plane(point_b, [1,0,0,0])
+
+        print("A Image point {} : World point {}".format(str(point_a), str(world_point_a)))
+        print("B Image point {} : World point {}".format(str(point_b), str(world_point_b)))
+        
+        contour_planes[i] = get_perpendicular_plane(world_point_a, world_point_b)
+    
+    for i in range(len(contour_planes)):
+        plane_a = contour_planes[i]
+        vector_a = (plane_a[0], plane_a[1], plane_a[2])
+        print(vector_a)
+        print(np.linalg.norm(vector_a))
+        unit_a = vector_a / np.linalg.norm(vector_a)
+
+        for j in range(i + 1, len(contour_planes)):
+            plane_b = contour_planes[j]
+            vector_b = (plane_b[0], plane_b[1], plane_b[2])
+            print(vector_b)
+            print(np.linalg.norm(vector_b))
+            unit_b = vector_b / np.linalg.norm(vector_b)
+
+            angle = np.arccos(np.clip(np.dot(unit_a, unit_b), -1.0, 1.0))
+            
+            #print("Angle between {} and {} is {}".format(str(unit_a), str(unit_b), str(angle)))
+
+            if np.abs(angle - np.pi / 2) < np.pi / 32:
+                return [1,0,0,0], plane_a, plane_b
+
+    
 def plane_adjustments(image):
     print("Point to the intersection of the three planes")
     uv = getUVcoords(image)
-    position_aux = np.linalg.inv(mtx).dot(uv) #- tvec
-    image_plane_position = np.linalg.inv(np.matrix(rotM)).dot(position_aux)
-    flat_image_position = np.squeeze(np.asarray(image_plane_position))
-    print("Image plane position {}".format(str(flat_image_position)))
-    vertex_position = intersection(flat_image_position,flat_camera_position,1,0,0,0)
-    print("World position {}".format(str(vertex_position)))
+    vertex_position = project_image_point_to_plane(uv, [1,0,0,0])
 
     print("Point to the intersection between the x = 0 plane and a second plane")
     uv = getUVcoords(image)
-    position_aux = np.linalg.inv(mtx).dot(uv) - tvec
-    image_plane_position = np.linalg.inv(np.matrix(rotM)).dot(position_aux)
-    flat_image_position = np.squeeze(np.asarray(image_plane_position))
-    print("Image plane position {}".format(str(flat_image_position)))
-    intersection1_position = intersection(flat_image_position,flat_camera_position,1,0,0,0)
-    print("World position {}".format(str(intersection1_position)))
+    intersection1_position = project_image_point_to_plane(uv, [1,0,0,0])
 
     print("Point to the intersection between the x = 0 plane and a third plane")
     uv = getUVcoords(image)
-    position_aux = np.linalg.inv(mtx).dot(uv) - tvec
-    image_plane_position = np.linalg.inv(np.matrix(rotM)).dot(position_aux)
-    flat_image_position = np.squeeze(np.asarray(image_plane_position))
-    print("Image plane position {}".format(str(flat_image_position)))
-    intersection2_position = intersection(flat_image_position,flat_camera_position,1,0,0,0)
-    print("World position {}".format(str(intersection2_position)))
+    intersection2_position = project_image_point_to_plane(uv, [1,0,0,0])
 
     plane1 = [1,0,0,0]  # x = 0
     plane2 = get_perpendicular_plane(vertex_position, intersection1_position)
@@ -198,9 +266,8 @@ def light_calibration(frame):
     image = cv.imread('./imgs/alternate/i ({}).png'.format(frame))
     cv.imshow("img", image)
 
-    # Difference between the control image and the frame being analised
-
-    # Thinning of the scan line
+    # Obtain scan line
+    scan_line = []
 
     # Choose three random points that are a part of the background
 
@@ -217,6 +284,8 @@ planes = cv.imread('./imgs/alternate4/planes.png')
 
 control_image = cv.imread('./imgs/alternate4/i (1).png')
 bg_mask, fg_mask = decompose_image(planes, control_image)
+print(str(plane_adjustments_alt(planes, fg_mask)))
+print(str(plane_adjustments(planes)))
 #light_calibration(13)
 #for i in range(2, 2):  
 #    light_calibration(i)
