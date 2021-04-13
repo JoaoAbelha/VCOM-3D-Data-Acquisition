@@ -7,11 +7,11 @@ import pickle
 # this will enable us to correct the distortions
 
 IMAGES_PATH_EXPRESSION = './imgs/chessboard/*.jpg'
-PATTERN_SIZE = (8, 6)
-CHECKBOARD_SIZE = (8, 6)
+PATTERN_SIZE = (9, 6)
+CHECKBOARD_SIZE = (9, 6)
 FIELD_SIZE = 15 # it can represented in mm. For squares
 TERMINATION_CRITERIA = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
-SHOW_IMAGES = False
+SHOW_IMAGES = True
 PATH_SAVE_INTRINSIC_PARAMS = "calibration/wide_dist_pickle.p"
 SAVE_PARAMETERS = True
 
@@ -72,6 +72,8 @@ def camera_calibration():
                 cv.drawChessboardCorners(img, (8,6), corners2, ret)
                 cv.imshow('img', img)
                 cv.waitKey(500)
+        else:
+            print(fname," no point found")
 
 
     if SHOW_IMAGES:

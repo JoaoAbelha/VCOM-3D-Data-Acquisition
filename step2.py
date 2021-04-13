@@ -48,11 +48,11 @@ def draw(img, corners, imgpts):
 def camera_position(img):
     (mtx, dist) = readIntrinsicParameters()
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    ret, corners = cv.findChessboardCorners(gray, (8, 6), None)
+    ret, corners = cv.findChessboardCorners(gray, (9, 6), None)
 
     # 3d points
-    objp = np.zeros((8*6, 3), np.float32)
-    objp[:, :2] = np.mgrid[0:8, 0:6].T.reshape(-1, 2) * 15
+    objp = np.zeros((9*6, 3), np.float32)
+    objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2) * 15
 
     #   - solvePnP requires camera calibraiton
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)

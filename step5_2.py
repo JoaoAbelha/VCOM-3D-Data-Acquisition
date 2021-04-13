@@ -4,6 +4,7 @@ import os
 from matplotlib import pyplot as plt
 import math
 
+SHOW_IMAGES = True
 
 def getShadowPoints(frame):
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -79,6 +80,12 @@ def getShadowPoints(frame):
 
     selected_contours = np.zeros((height,width,3), np.uint8)
     cv2.drawContours(selected_contours, new_contours, -1, (0,255,0), 1)
+
+    if SHOW_IMAGES:
+        cv2.imshow('img', selected_contours)
+        cv2.waitKey(1500)
+    if SHOW_IMAGES:
+        cv2.destroyAllWindows()
 
     points = []
     for x in range(width):

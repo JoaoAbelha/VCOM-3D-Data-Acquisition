@@ -9,7 +9,7 @@ from step5_2 import getShadowPoints
 from step6 import shadow3DPoints
 
 CAMERA_POSITION_IMG = './imgs/chessboard/IMG_20210413_175444.jpg'
-IMG = './imgs/img1.png'
+IMG = './imgs/img2.jpg'
 
 
 def main():
@@ -20,14 +20,14 @@ def main():
     image = cv2.imread(IMG)
     shadowPoints = getShadowPoints(image)
     objectPoints = shadow3DPoints(shadowPoints, projection_matrix)
+    print(objectPoints)
     
     fig = plt.figure()
-    ax = fig.add_subplot(projection='3d')
+    ax = fig.add_subplot()
     for p in objectPoints:
-        ax.scatter(p[0], p[1], p[2])
+        ax.scatter(p[1], p[2])
     ax.set_xlabel('X Label')
     ax.set_ylabel('Y Label')
-    ax.set_zlabel('Z Label')
 
     plt.show()
 
