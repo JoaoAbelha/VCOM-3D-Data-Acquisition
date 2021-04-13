@@ -81,3 +81,5 @@ def camera_position(img):
         print('projection matrix : ')
         print(getProjectionMatrix(mtx, rvec, tvec))
         return (position_normalized, getProjectionMatrix(mtx, rvec, tvec))
+    else:
+        print('could not find position')

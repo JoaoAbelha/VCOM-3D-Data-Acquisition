@@ -8,8 +8,8 @@ from step2 import camera_position
 from step5_2 import getShadowPoints
 from step6 import shadow3DPoints
 
-CAMERA_POSITION_IMG = 'calibration/GOPR0032.jpg'
-IMG = './imgs/alternate/Untitled_000037.png'
+CAMERA_POSITION_IMG = './imgs/chessboard/IMG_20210413_175444.jpg'
+IMG = './imgs/img1.png'
 
 
 def main():
