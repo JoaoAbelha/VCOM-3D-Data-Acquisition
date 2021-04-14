@@ -1,5 +1,6 @@
 from step2 import camera_position, readIntrinsicParameters
 from step1 import camera_calibration
+from step5_2 import getShadowPoints
 import cv2 as cv
 import numpy as np
 import random as rng
@@ -260,32 +261,89 @@ def decompose_image(background, foreground):
 
     return bg_mask_aux, bg_mask
 
+def project_image_point_to_space(point):
+    point1 = project_image_point_to_plane(point, plane1)
+    distance1 = np.linalg.norm(point1 - flat_camera_position)
+
+    point2 = project_image_point_to_plane(point, plane2)
+    distance2 = np.linalg.norm(point2 - flat_camera_position)
+
+    point3 = project_image_point_to_plane(point, plane3)
+    distance3 = np.linalg.norm(point3 - flat_camera_position)
+
+    if distance1 >= distance2 and distance1 >= distance3:
+        return np.asarray(point1)
+    elif distance2 >= distance3:
+        return np.asarray(point2)
+    else:
+        return np.asarray(point3)
 
 # this function only has dummy values for now
-def light_calibration(frame):
-    image = cv.imread('./imgs/alternate/i ({}).png'.format(frame))
+def light_calibration(frame, mask = None):
+    image = cv.imread('./imgs/alternate4/i ({}).png'.format(frame))
     cv.imshow("img", image)
+    cv.waitKey(0)
+
+    white = np.full(image.shape, 255)
+    print(image.shape)
+    print(white.shape)
+    print(mask.shape)
+    channel_increase = lambda x: np.array([x,x,x])
+    three_channel_mask = cv.merge([mask,mask,mask])
+    print(three_channel_mask.shape)
+
+    cv.imshow("img", three_channel_mask)
+    cv.waitKey(0)
+
+    img_trimmed = cv.bitwise_or(image, cv.bitwise_not(three_channel_mask))
+    cv.imshow("img", img_trimmed)
+    cv.waitKey(0)
 
     # Obtain scan line
-    scan_line = []
+    scan_line = getShadowPoints(img_trimmed)
+
+    if len(scan_line) < 3:
+        return []
 
     # Choose three random points that are a part of the background
+    index_a = rng.randint(0, len(scan_line) - 1)
+    point_a = np.asarray(scan_line[index_a])
+    point_a = np.array([[point_a[0],point_a[1],1]], dtype=np.float32).T
+    print(point_a)
+    p1 = project_image_point_to_space(point_a)
 
+    scan_line = np.delete(scan_line, index_a, 0)
+
+    index_b = rng.randint(0, len(scan_line) - 1)
+    point_b = np.asarray(scan_line[index_b])
+    point_b = np.array([[point_b[0],point_b[1],1]], dtype=np.float32).T
+    print(point_b)
+    p2 = project_image_point_to_space(point_b)
+
+    scan_line = np.delete(scan_line, index_b, 0)
+
+    index_c = rng.randint(0, len(scan_line) - 1)
+    point_c = np.asarray(scan_line[index_c])
+    point_c = np.array([[point_c[0],point_c[1],1]], dtype=np.float32).T
+    print(point_c)
+    p3 = project_image_point_to_space(point_c)
     # Calculate the shadow plane
+
+    return calculate_plane(p1,p2,p3)
 
 
 (mtx, dist) = readIntrinsicParameters()
 img = cv.imread('./imgs/alternate4/checkerboard.png')
-camera_position, rvec, tvec, rotM, r_camera_position = camera_position(img)
+camera_position, rvec, tvec, rotM, r_camera_position, _ = camera_position(img)
 flat_camera_position = np.squeeze(np.asarray(r_camera_position))
 
 planes = cv.imread('./imgs/alternate4/planes.png')
-#plane1, plane2, plane3 = plane_adjustments(planes)
 
 control_image = cv.imread('./imgs/alternate4/i (1).png')
 bg_mask, fg_mask = decompose_image(planes, control_image)
-print(str(plane_adjustments_alt(planes, fg_mask)))
-print(str(plane_adjustments(planes)))
-#light_calibration(13)
+
+plane1, plane2, plane3 = plane_adjustments(planes)
+print(str((plane1,plane2,plane3)))
+print(light_calibration(13, mask = fg_mask))
 #for i in range(2, 2):  
 #    light_calibration(i)

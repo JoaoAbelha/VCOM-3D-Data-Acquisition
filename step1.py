@@ -72,6 +72,8 @@ def camera_calibration():
                 cv.drawChessboardCorners(img, (8,6), corners2, ret)
                 cv.imshow('img', img)
                 cv.waitKey(500)
+        else:
+            print(fname," no point found")
 
 
     if SHOW_IMAGES:
