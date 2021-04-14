@@ -58,7 +58,9 @@ def camera_position(img):
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
     if ret == True:
         corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-        ret, rvec, tvec = cv.solvePnP(objp, corners2, mtx, dist)
+        #ret, rvec, tvec = cv.solvePnP(objp, corners2, mtx, dist)
+        ret, rvec, tvec, inliers = cv.solvePnPRansac(objp, corners2, mtx, dist)
+
         axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, -3]]
                           ).reshape(-1, 3) * AXIS_SIZE
         axis_img, _ = cv.projectPoints(axis, rvec, tvec, mtx, dist)

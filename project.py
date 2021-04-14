@@ -11,7 +11,6 @@ from step6 import shadow3DPoints
 CAMERA_POSITION_IMG = './imgs/objs2/IMG_20210414_122106.jpg'
 IMG = './imgs/objs2/IMG_20210414_122849.jpg'
 
-
 def main():
     #print("Hello World!")
     #camera_calibration()
@@ -21,13 +20,50 @@ def main():
     shadowPoints = getShadowPoints(image)
     objectPoints = shadow3DPoints(shadowPoints, projection_matrix)
     #print(objectPoints)
+    points = []
+    current_point = objectPoints[0]
+
+    for p in objectPoints:
+        if math.dist(current_point, p) >= 5:
+            points.append(current_point)
+            current_point = p
     
+    print(len(objectPoints))
+    print(len(points))
+    #print(points)
+    t= []
+    for p in points:
+        t.append(p[2])
+        
+    n, bins, patches = plt.hist(x=t, bins='auto', color='#0504aa',
+                            alpha=0.7, rwidth=0.85)
+    plt.show()
+
+    ##
+    final_list = np.array([])
+    binlist = np.c_[bins[:-1],bins[1:]]
+    d = np.array(t)
+    for i in range(len(binlist)):
+        if i == len(binlist)-1:
+            l = d[(d >= binlist[i,0]) & (d <= binlist[i,1])]
+        else:
+            l = d[(d >= binlist[i,0]) & (d < binlist[i,1])]
+        if l.shape[0] < 10:
+            final_list = np.append(final_list, l)
+    ##
+
     fig = plt.figure()
     ax = fig.add_subplot()
-    for p in objectPoints:
-        ax.scatter(p[0], p[2])
+    print(len(final_list))
+    
+    for p in points:
+        if p[2] not in final_list:
+            ax.scatter(p[0], -p[2])
+    plt.ylim([-200, 0])
+
     ax.set_xlabel('X Label')
-    ax.set_ylabel('Y Label')
+    ax.set_ylabel('Z Label')
+    
 
     plt.show()
     
