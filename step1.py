@@ -6,10 +6,10 @@ import pickle
 ############# intrinsic parameters ##################
 # this will enable us to correct the distortions
 
-IMAGES_PATH_EXPRESSION = './imgs/chessboard/*.jpg'
+IMAGES_PATH_EXPRESSION = './imgs/chessboard3/*.jpg'
 PATTERN_SIZE = (9, 6)
 CHECKBOARD_SIZE = (9, 6)
-FIELD_SIZE = 15 # it can represented in mm. For squares
+FIELD_SIZE = 22 # it can represented in mm. For squares
 TERMINATION_CRITERIA = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
 SHOW_IMAGES = True
 PATH_SAVE_INTRINSIC_PARAMS = "calibration/wide_dist_pickle.p"
@@ -69,7 +69,7 @@ def camera_calibration():
             corners2 = cv.cornerSubPix(gray, corners, (11,11), (-1, -1), TERMINATION_CRITERIA)
             imgPoints.append(corners)
             if SHOW_IMAGES:
-                cv.drawChessboardCorners(img, (8,6), corners2, ret)
+                cv.drawChessboardCorners(img, (9,6), corners2, ret)
                 cv.imshow('img', img)
                 cv.waitKey(500)
         else:

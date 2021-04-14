@@ -8,13 +8,13 @@ from step2 import camera_position
 from step5_2 import getShadowPoints
 from step6 import shadow3DPoints
 
-CAMERA_POSITION_IMG = './imgs/chessboard/IMG_20210413_175444.jpg'
-IMG = './imgs/img2.jpg'
+CAMERA_POSITION_IMG = './imgs/chessboard3/IMG_20210414_000554.jpg'
+IMG = './imgs/objs/IMG_20210414_000939.jpg'
 
 
 def main():
     #print("Hello World!")
-    #camera_calibration()
+    camera_calibration()
     chessBoardImage = cv2.imread(CAMERA_POSITION_IMG)
     position_normalized, projection_matrix = camera_position(chessBoardImage)
     image = cv2.imread(IMG)

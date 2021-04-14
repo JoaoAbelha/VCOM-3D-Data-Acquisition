@@ -83,7 +83,7 @@ def getShadowPoints(frame):
 
     if SHOW_IMAGES:
         cv2.imshow('img', selected_contours)
-        cv2.waitKey(1500)
+        cv2.waitKey(5000)
     if SHOW_IMAGES:
         cv2.destroyAllWindows()
 

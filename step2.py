@@ -5,7 +5,7 @@ import numpy as np
 from utils import getProjectionMatrix
 
 AXIS_SIZE = 3
-SHOW_AXIS_IMAGE = False
+SHOW_AXIS_IMAGE = True
 
 
 def readIntrinsicParameters():
@@ -52,7 +52,7 @@ def camera_position(img):
 
     # 3d points
     objp = np.zeros((9*6, 3), np.float32)
-    objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2) * 15
+    objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2) * 22
 
     #   - solvePnP requires camera calibraiton
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
