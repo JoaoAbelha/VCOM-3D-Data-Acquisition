@@ -6,10 +6,12 @@ import math
 from step1 import camera_calibration
 from step2 import camera_position
 from step5_2 import getShadowPoints
+from step5 import getShadowPoints_2
 from step6 import shadow3DPoints
 
 CAMERA_POSITION_IMG = './imgs/objs2/IMG_20210414_122106.jpg'
-IMG = './imgs/objs2/IMG_20210414_122849.jpg'
+IMG = './imgs/objs2/IMG_20210414_123048.jpg'
+IMG_NO_SHADOW = './imgs/objs2/IMG_20210414_122921.jpg'
 
 def main():
     #print("Hello World!")
@@ -17,7 +19,9 @@ def main():
     chessBoardImage = cv2.imread(CAMERA_POSITION_IMG)
     position_normalized, projection_matrix = camera_position(chessBoardImage)
     image = cv2.imread(IMG)
+    image_no_shadow = cv2.imread(IMG_NO_SHADOW)
     shadowPoints = getShadowPoints(image)
+    #shadowPoints = getShadowPoints_2(image_no_shadow,image)
     objectPoints = shadow3DPoints(shadowPoints, projection_matrix)
     #print(objectPoints)
     points = []
@@ -55,9 +59,11 @@ def main():
     fig = plt.figure()
     ax = fig.add_subplot()
     print(len(final_list))
+
+
     
     for p in points:
-        if p[2] not in final_list:
+        if p[2] not in final_list or True:
             ax.scatter(p[0], -p[2])
     plt.ylim([-200, 0])
 
