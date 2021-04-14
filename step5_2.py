@@ -19,7 +19,7 @@ def getShadowPoints(frame):
     lookUpTable = np.empty((1,256), np.uint8)
     gamma = 2
     for i in range(256):
-        lookUpTable[0,i] = np.clip( 3*i - 60 , 0 , 255)
+        lookUpTable[0,i] = np.clip( 2*i - 60 , 0 , 255)
     lut_img = cv2.LUT(blur, lookUpTable)
 
     ret,thres = cv2.threshold(lut_img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
@@ -83,7 +83,7 @@ def getShadowPoints(frame):
 
     if SHOW_IMAGES:
         cv2.imshow('img', selected_contours)
-        cv2.waitKey(5000)
+        cv2.waitKey(3000)
     if SHOW_IMAGES:
         cv2.destroyAllWindows()
 
@@ -93,5 +93,14 @@ def getShadowPoints(frame):
             if (selected_contours[y][x] == [0,255,0]).all():
                 points.append((x,y))
                 break
+    
+    if SHOW_IMAGES:
+        line_img = np.zeros((height,width,3), np.uint8)
+        for p in points:
+            line_img[p[1]][p[0]] = 255
+        cv2.imshow('img', line_img)
+        cv2.waitKey(3000)
+    if SHOW_IMAGES:
+        cv2.destroyAllWindows()
     return points
     

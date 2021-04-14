@@ -4,7 +4,7 @@ import cv2 as cv
 import numpy as np
 from utils import getProjectionMatrix
 
-AXIS_SIZE = 3
+AXIS_SIZE = 10
 SHOW_AXIS_IMAGE = True
 
 

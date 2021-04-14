@@ -6,12 +6,12 @@ import pickle
 ############# intrinsic parameters ##################
 # this will enable us to correct the distortions
 
-IMAGES_PATH_EXPRESSION = './imgs/chessboard3/*.jpg'
+IMAGES_PATH_EXPRESSION = './imgs/chessboard5/*.jpg'
 PATTERN_SIZE = (9, 6)
 CHECKBOARD_SIZE = (9, 6)
 FIELD_SIZE = 22 # it can represented in mm. For squares
 TERMINATION_CRITERIA = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
-SHOW_IMAGES = True
+SHOW_IMAGES = False
 PATH_SAVE_INTRINSIC_PARAMS = "calibration/wide_dist_pickle.p"
 SAVE_PARAMETERS = True
 
