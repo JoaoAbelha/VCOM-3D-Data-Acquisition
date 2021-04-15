@@ -23,6 +23,22 @@ PATH_SAVE_INTRINSIC_PARAMS="calibration/wide_dist_pickle.p"
 #  SAVE_PARAMETERS: if true, the parameters are saved in a file
 SAVE_PARAMETERS = False
 
+'''
+    * param {objectPoints}: the points that were found through shadow segmentation
+    * post processing: deletes points that are too closed since visually it does not make any difference but
+      computationally it eases the display of points
+    returns a new set of points
+'''
+def reducePoints(objectPoints):
+    points = []
+    current_point = objectPoints[0]
+
+    for p in objectPoints:
+        if math.dist(current_point, p) >= 5:
+            points.append(current_point)
+            current_point = p
+    return points
+
 
 def main():
     if SAVE_PARAMETERS:
@@ -36,14 +52,8 @@ def main():
     #shadowPoints = getShadowPoints_2(image_no_shadow,image)
     objectPoints = shadow3DPoints(shadowPoints, projection_matrix)
     #print(objectPoints)
-    points = []
-    current_point = objectPoints[0]
+    points = reducePoints(objectPoints)
 
-    for p in objectPoints:
-        if math.dist(current_point, p) >= 5:
-            points.append(current_point)
-            current_point = p
-    
     print(len(objectPoints))
     print(len(points))
     #print(points)

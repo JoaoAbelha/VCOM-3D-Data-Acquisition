@@ -29,10 +29,3 @@ def gaussMethod(m):
     # check column to see intersection
     return m
 
-
-gaussMethod([
-    [9, 8, 1, 2, 120],
-    [4, 100, 10, 2, 119],
-    [6, 8, 55, 4, 70],
-    [10, 2, 45, 80, 96]
-])
