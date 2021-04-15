@@ -9,21 +9,27 @@ from step5_2 import getShadowPoints
 from step5 import getShadowPoints_2
 from step6 import shadow3DPoints
 
+'''
+    Global configuration  and variables shared in steps
+'''
 CAMERA_POSITION_IMG = './imgs/objs2/IMG_20210414_122106.jpg'
 IMG = './imgs/objs2/IMG_20210414_123048.jpg'
 IMG_NO_SHADOW = './imgs/objs2/IMG_20210414_122921.jpg'
 
-def main():
-    #print("Hello World!")
-    #camera_calibration()
-    chessBoardImage = cv2.imread(CAMERA_POSITION_IMG)
-    position_normalized, projection_matrix = camera_position(chessBoardImage)
-    image = cv2.imread(IMG)
-    image_no_shadow = cv2.imread(IMG_NO_SHADOW)
-    shadowPoints = getShadowPoints(image)
-    #shadowPoints = getShadowPoints_2(image_no_shadow,image)
-    objectPoints = shadow3DPoints(shadowPoints, projection_matrix)
-    #print(objectPoints)
+# PATTERN_SIZE: the pattern the algorithm is going to look for in the chessboard
+PATTERN_SIZE=(9,6)
+#  PATH_SAVE_INTRINSIC_PARAMS: where the intrinsic parameters are going to be saved
+PATH_SAVE_INTRINSIC_PARAMS="calibration/wide_dist_pickle.p"
+#  SAVE_PARAMETERS: if true, the parameters are saved in a file
+SAVE_PARAMETERS = False
+
+'''
+    * param {objectPoints}: the points that were found through shadow segmentation
+    * post processing: deletes points that are too closed since visually it does not make any difference but
+      computationally it eases the display of points
+    returns a new set of points
+'''
+def reducePoints(objectPoints):
     points = []
     current_point = objectPoints[0]
 
@@ -31,7 +37,23 @@ def main():
         if math.dist(current_point, p) >= 5:
             points.append(current_point)
             current_point = p
+    return points
+
+
+def main():
+    if SAVE_PARAMETERS:
+        camera_calibration(PATTERN_SIZE, PATH_SAVE_INTRINSIC_PARAMS)
     
+    chessBoardImage = cv2.imread(CAMERA_POSITION_IMG)
+    position_normalized, projection_matrix = camera_position(chessBoardImage, PATH_SAVE_INTRINSIC_PARAMS, PATTERN_SIZE)
+    image = cv2.imread(IMG)
+    image_no_shadow = cv2.imread(IMG_NO_SHADOW)
+    shadowPoints = getShadowPoints(image)
+    #shadowPoints = getShadowPoints_2(image_no_shadow,image)
+    objectPoints = shadow3DPoints(shadowPoints, projection_matrix)
+    #print(objectPoints)
+    points = reducePoints(objectPoints)
+
     print(len(objectPoints))
     print(len(points))
     #print(points)
