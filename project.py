@@ -13,6 +13,7 @@ CAMERA_POSITION_IMG = './imgs/objs2/IMG_20210414_122106.jpg'
 IMG = './imgs/objs2/IMG_20210414_123048.jpg'
 IMG_NO_SHADOW = './imgs/objs2/IMG_20210414_122921.jpg'
 
+
 def main():
     #print("Hello World!")
     #camera_calibration()

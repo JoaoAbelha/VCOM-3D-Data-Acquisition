@@ -1,13 +1,26 @@
-####### camera pose - extrinsic parameters ##########
 import pickle
 import cv2 as cv
 import numpy as np
 from utils import getProjectionMatrix
 
+'''
+    Second step: Find the extrinsic parameters, in other words, 
+    the camera pose
+
+'''
+
+'''
+ Global configuration variables that are used in this second step
+ * AXIS_SIZE: if the image is show, this represents the size of the axis drawn in the image
+ * SHOW_AXIS_IMAGE: displays the image in which the camera pose was calculated
+'''
 AXIS_SIZE = 10
 SHOW_AXIS_IMAGE = True
 
-
+'''
+ * reads from the file, the intrinsic parameters of the camera
+ * returns a tuple with those values
+'''
 def readIntrinsicParameters():
     objects = []
     with (open("calibration/wide_dist_pickle.p", "rb")) as openfile:
@@ -30,7 +43,13 @@ def readIntrinsicParameters():
 
     return (intrinsic["mtx"], intrinsic["dist"])
 
-
+'''
+* param {img}: the image where the camera pose was calculated
+* param {corners}: the corners of the chessboard
+* param {imgpts}: the image points
+* it draws in the img the axis that is centered in the first chess corner
+* it returns the img with the axis drawn on it
+'''
 def draw(img, corners, imgpts):
     """Draw Axes"""
     corner = tuple(corners[0].ravel())
@@ -39,12 +58,12 @@ def draw(img, corners, imgpts):
     cv.line(img, corner, tuple(imgpts[2].ravel()), (0, 0, 255), 5)
     return img
 
-# if our xy plane is known (extrinsic and intrinsic parameters for a certain camara pose)
-# we can intersect the ray formed by two different points
-# if the point is strictly in the xy plane we can intersect the xy plane with the ray that passes through the optical centre and
-# the respective point in the image plane that is in the base
 
-
+'''
+ * param {img}: the image that we want to find the camera pose
+ * it calculates the camera position and the projection matrix
+ * returns the camera position and the projection matrix
+'''
 def camera_position(img):
     (mtx, dist) = readIntrinsicParameters()
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -54,7 +73,7 @@ def camera_position(img):
     objp = np.zeros((9*6, 3), np.float32)
     objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2) * 22
 
-    #   - solvePnP requires camera calibraiton
+    # solvePnP requires camera calibraiton
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
     if ret == True:
         corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
