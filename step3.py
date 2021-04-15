@@ -118,8 +118,6 @@ def getUVcoords(img):
         cv.waitKey(1)
     cv.destroyAllWindows()
     print("Cursor position {}".format(str(cursor_position)))
-    u = cursor_position[0] - new_size * orig_width / 2
-    v = cursor_position[1] - new_size * orig_height / 2
     uv = np.array([[cursor_position[0] / new_size,cursor_position[1] / new_size,1]], dtype=np.float32).T
     return uv
 
@@ -145,12 +143,12 @@ def get_perpendicular_plane(point1, point2):
 
     return calculate_plane(p1,p2,p3)
 
-def project_image_point_to_plane(point, plane):
+def project_image_point_to_plane(point, plane, mtx, rotM, camera_pos):
     position_aux = np.linalg.inv(mtx).dot(point) #- tvec
     image_plane_position = np.linalg.inv(np.matrix(rotM)).dot(position_aux)
     flat_image_position = np.squeeze(np.asarray(image_plane_position))
     print("Image plane position {}".format(str(flat_image_position)))
-    world_position = intersection(flat_image_position,flat_camera_position,plane[0], plane[1], plane[2], plane[3])
+    world_position = intersection(flat_image_position, camera_pos,plane[0], plane[1], plane[2], plane[3])
     print("World position {}".format(str(world_position)))
     return world_position
 
@@ -227,31 +225,33 @@ def plane_adjustments_alt(image, mask):
                 return [1,0,0,0], plane_a, plane_b
 
     
-def plane_adjustments(image):
+def plane_adjustments(image, mtx, rotM, camera_pos):
     print("Point to the intersection of the three planes")
     uv = getUVcoords(image)
-    vertex_position = project_image_point_to_plane(uv, [1,0,0,0])
+    vertex_position = project_image_point_to_plane(uv, [1,0,0,0], mtx, rotM, camera_pos)
 
     print("Point to the intersection between the x = 0 plane and a second plane")
     uv = getUVcoords(image)
-    intersection1_position = project_image_point_to_plane(uv, [1,0,0,0])
+    intersection1_position = project_image_point_to_plane(uv, [1,0,0,0], mtx, rotM, camera_pos)
 
     print("Point to the intersection between the x = 0 plane and a third plane")
     uv = getUVcoords(image)
-    intersection2_position = project_image_point_to_plane(uv, [1,0,0,0])
+    intersection2_position = project_image_point_to_plane(uv, [1,0,0,0], mtx, rotM, camera_pos)
 
     plane1 = [1,0,0,0]  # x = 0
     plane2 = get_perpendicular_plane(vertex_position, intersection1_position)
     plane3 = get_perpendicular_plane(vertex_position, intersection2_position)
 
-    return plane1,plane2,plane3
+    return plane1, plane2, plane3
 
 def decompose_image(background, foreground):
     bg_grey = cv.cvtColor(background, cv.COLOR_BGR2GRAY)
     _, bg_mask_aux = cv.threshold(bg_grey, BACKGROUND_THRESHOLD, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
-    
-    fg = cv.cvtColor(foreground, cv.COLOR_BGR2GRAY)
-    difference = cv.subtract(background,foreground)
+
+    if foreground is None:
+        return bg_mask_aux, None
+
+    difference = cv.subtract(background, foreground)
 
     diff_grey = cv.cvtColor(difference, cv.COLOR_BGR2GRAY)
     diff_eq = cv.equalizeHist(diff_grey)
@@ -261,15 +261,17 @@ def decompose_image(background, foreground):
 
     return bg_mask_aux, bg_mask
 
-def project_image_point_to_space(point):
-    point1 = project_image_point_to_plane(point, plane1)
-    distance1 = np.linalg.norm(point1 - flat_camera_position)
+def project_image_point_to_space(point, mtx, rotM, camera_pos, planes):
+    point1 = project_image_point_to_plane(point, planes[0], mtx, rotM, camera_pos)
+    print(point1)
+    print(camera_pos)
+    distance1 = np.linalg.norm(point1 - camera_pos)
 
-    point2 = project_image_point_to_plane(point, plane2)
-    distance2 = np.linalg.norm(point2 - flat_camera_position)
+    point2 = project_image_point_to_plane(point, planes[1], mtx, rotM, camera_pos)
+    distance2 = np.linalg.norm(point2 - camera_pos)
 
-    point3 = project_image_point_to_plane(point, plane3)
-    distance3 = np.linalg.norm(point3 - flat_camera_position)
+    point3 = project_image_point_to_plane(point, planes[2], mtx, rotM, camera_pos)
+    distance3 = np.linalg.norm(point3 - camera_pos)
 
     if distance1 >= distance2 and distance1 >= distance3:
         return np.asarray(point1)
@@ -279,8 +281,9 @@ def project_image_point_to_space(point):
         return np.asarray(point3)
 
 # this function only has dummy values for now
-def light_calibration(frame, mask = None):
-    image = cv.imread('./imgs/alternate4/i ({}).png'.format(frame))
+def light_calibration(image, mtx, rotM, camera_pos, planes, mask = None):
+    flat_camera_position = np.squeeze(np.asarray(camera_pos))
+
     cv.imshow("img", image)
     cv.waitKey(0)
 
@@ -288,7 +291,6 @@ def light_calibration(frame, mask = None):
     print(image.shape)
     print(white.shape)
     print(mask.shape)
-    channel_increase = lambda x: np.array([x,x,x])
     three_channel_mask = cv.merge([mask,mask,mask])
     print(three_channel_mask.shape)
 
@@ -310,7 +312,7 @@ def light_calibration(frame, mask = None):
     point_a = np.asarray(scan_line[index_a])
     point_a = np.array([[point_a[0],point_a[1],1]], dtype=np.float32).T
     print(point_a)
-    p1 = project_image_point_to_space(point_a)
+    p1 = project_image_point_to_space(point_a, mtx, rotM, flat_camera_position, planes)
 
     scan_line = np.delete(scan_line, index_a, 0)
 
@@ -318,7 +320,7 @@ def light_calibration(frame, mask = None):
     point_b = np.asarray(scan_line[index_b])
     point_b = np.array([[point_b[0],point_b[1],1]], dtype=np.float32).T
     print(point_b)
-    p2 = project_image_point_to_space(point_b)
+    p2 = project_image_point_to_space(point_b, mtx, rotM, flat_camera_position, planes)
 
     scan_line = np.delete(scan_line, index_b, 0)
 
@@ -326,24 +328,16 @@ def light_calibration(frame, mask = None):
     point_c = np.asarray(scan_line[index_c])
     point_c = np.array([[point_c[0],point_c[1],1]], dtype=np.float32).T
     print(point_c)
-    p3 = project_image_point_to_space(point_c)
+    p3 = project_image_point_to_space(point_c, mtx, rotM, flat_camera_position, planes)
     # Calculate the shadow plane
 
     return calculate_plane(p1,p2,p3)
 
+def calibrate_planes(mtx, rotM, camera_pos, image, control_image = None):
+    flat_camera_position = np.squeeze(np.asarray(camera_pos))
 
-(mtx, dist) = readIntrinsicParameters()
-img = cv.imread('./imgs/alternate4/checkerboard.png')
-camera_position, rvec, tvec, rotM, r_camera_position, _ = camera_position(img)
-flat_camera_position = np.squeeze(np.asarray(r_camera_position))
+    bg_mask, fg_mask = decompose_image(image, control_image)
 
-planes = cv.imread('./imgs/alternate4/planes.png')
+    plane1, plane2, plane3 = plane_adjustments(image, mtx, rotM, flat_camera_position)
 
-control_image = cv.imread('./imgs/alternate4/i (1).png')
-bg_mask, fg_mask = decompose_image(planes, control_image)
-
-plane1, plane2, plane3 = plane_adjustments(planes)
-print(str((plane1,plane2,plane3)))
-print(light_calibration(13, mask = fg_mask))
-#for i in range(2, 2):  
-#    light_calibration(i)
+    return bg_mask, fg_mask, (plane1, plane2, plane3)

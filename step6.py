@@ -3,10 +3,10 @@ import numpy as np
 from step2 import camera_position
 from utils import gaussMethod
 
-DEFAUL_SHADHOW_PLANE = np.array([1, 0, 0, 0])
+DEFAUL_SHADOW_PLANE = np.array([0, 1, 0, 0])
 
 
-def calculate3DPoint(i, j, projectionMatrix, shadowPlane=DEFAUL_SHADHOW_PLANE):
+def calculate3DPoint(i, j, projectionMatrix, shadowPlane=DEFAUL_SHADOW_PLANE):
     firstEquation = np.array([
         projectionMatrix[2][0] * i - projectionMatrix[0][0],
         projectionMatrix[2][1] * i - projectionMatrix[0][1],
@@ -28,7 +28,7 @@ def calculate3DPoint(i, j, projectionMatrix, shadowPlane=DEFAUL_SHADHOW_PLANE):
     return [gaussResult[0][3], gaussResult[1][3], gaussResult[2][3]]
 
 
-def shadow3DPoints(points, projectionMatrix, shadowPlane=DEFAUL_SHADHOW_PLANE):
+def shadow3DPoints(points, projectionMatrix, shadowPlane=DEFAUL_SHADOW_PLANE):
     shadowPoints3D = []
     for p in points:
         point3D = calculate3DPoint(p[0], p[1], projectionMatrix)
