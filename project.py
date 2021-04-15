@@ -9,16 +9,27 @@ from step5_2 import getShadowPoints
 from step5 import getShadowPoints_2
 from step6 import shadow3DPoints
 
+'''
+    Global configuration  and variables shared in steps
+'''
 CAMERA_POSITION_IMG = './imgs/objs2/IMG_20210414_122106.jpg'
 IMG = './imgs/objs2/IMG_20210414_123048.jpg'
 IMG_NO_SHADOW = './imgs/objs2/IMG_20210414_122921.jpg'
 
+# PATTERN_SIZE: the pattern the algorithm is going to look for in the chessboard
+PATTERN_SIZE=(9,6)
+#  PATH_SAVE_INTRINSIC_PARAMS: where the intrinsic parameters are going to be saved
+PATH_SAVE_INTRINSIC_PARAMS="calibration/wide_dist_pickle.p"
+#  SAVE_PARAMETERS: if true, the parameters are saved in a file
+SAVE_PARAMETERS = False
+
 
 def main():
-    #print("Hello World!")
-    #camera_calibration()
+    if SAVE_PARAMETERS:
+        camera_calibration(PATTERN_SIZE, PATH_SAVE_INTRINSIC_PARAMS)
+    
     chessBoardImage = cv2.imread(CAMERA_POSITION_IMG)
-    position_normalized, projection_matrix = camera_position(chessBoardImage)
+    position_normalized, projection_matrix = camera_position(chessBoardImage, PATH_SAVE_INTRINSIC_PARAMS, PATTERN_SIZE)
     image = cv2.imread(IMG)
     image_no_shadow = cv2.imread(IMG_NO_SHADOW)
     shadowPoints = getShadowPoints(image)

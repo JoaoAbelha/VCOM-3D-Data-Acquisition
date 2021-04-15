@@ -14,29 +14,21 @@ import pickle
 '''
  Global configuration variables that are used in this first step
  * IMAGES_PATH_EXPRESSION: where the chessboard images that are going to be used to calibrate da camera are
- * PATTERN_SIZE: the pattern the algorithm is going to look for in the chessboard
- * CHESSBOARD_SIZE: the amount of corners in the chessboard
  * FIELD_SIZE: the real size of the boarders squares in mm, just to ease interpretation in later stages
  * SHOW_IMAGES: if true, it shows the patterns found in the chessboards
- * PATH_SAVE_INTRINSIC_PARAMS: where the intrinsic parameters are going to be saved
- * SAVE_PARAMETERS: if true, the parameters are saved in a file
 '''
 IMAGES_PATH_EXPRESSION = './imgs/chessboard5/*.jpg'
-PATTERN_SIZE = (9, 6)
-CHECKBOARD_SIZE = (9, 6)
 FIELD_SIZE = 22 # it can represented in mm. For squares
 TERMINATION_CRITERIA = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
 SHOW_IMAGES = False
-PATH_SAVE_INTRINSIC_PARAMS = "calibration/wide_dist_pickle.p"
-SAVE_PARAMETERS = True
-
 '''
 * param {mtx}: camera matrix
 * param {dist}: distortion parameters
+* params {PATH_SAVE_INTRINSIC_PARAMETERS}: the path where the intrinsic parameters are to be saved
 * it saves the camera matrix and distortion parameters in a file
 * return void
 '''
-def save_intrinsicParameters(mtx, dist):
+def save_intrinsicParameters(mtx, dist, PATH_SAVE_INTRINSIC_PARAMS):
     to_save = {}
     to_save['mtx'] = mtx
     to_save['dist'] = dist
@@ -79,11 +71,13 @@ def print_intrinsic_parameters(cameraMatrix, distCoeffs):
 
 
 '''
+ * params {PATH_SAVE_INTRINSIC_PARAMETERS}: the path where the intrinsic parameters are going to be saved
+ * params {PATTERN_SIZE}: the pattern the algorithm is going to look for in the chessboard
  * calibrate the camera by using a checkboard, it calculates the camera intrinsic parameters and distortion parameters
    the parameters are saved in a file since we only need to calculate the parameters once for each camera 
  * return void
 '''
-def camera_calibration():
+def camera_calibration(PATTERN_SIZE, PATH_SAVE_INTRINSIC_PARAMS):
     images = glob.glob(IMAGES_PATH_EXPRESSION)
     if len(images) == 0 :
         print('The folder calibration should not be empty if you wish to calibrate the camera')
@@ -92,8 +86,8 @@ def camera_calibration():
         print('warning: Having at least 10 different images with different orientation and positions is advisable')
 
     # z-depth = 0 assumed
-    object_points = np.zeros((CHECKBOARD_SIZE[0] * CHECKBOARD_SIZE[1], 3), np.float32)
-    object_points[:, :2] = np.mgrid[0:CHECKBOARD_SIZE[0], 0: CHECKBOARD_SIZE[1]].T.reshape(-1,2) *  FIELD_SIZE
+    object_points = np.zeros((PATTERN_SIZE[0] * PATTERN_SIZE[1], 3), np.float32)
+    object_points[:, :2] = np.mgrid[0:PATTERN_SIZE[0], 0: PATTERN_SIZE[1]].T.reshape(-1,2) *  FIELD_SIZE
 
     objPoints = [] 
     imgPoints = [] 
@@ -104,7 +98,7 @@ def camera_calibration():
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
         # Find the chess board corners
-        ret, corners = cv.findChessboardCorners(gray, CHECKBOARD_SIZE,\
+        ret, corners = cv.findChessboardCorners(gray, PATTERN_SIZE,\
                                                  cv.CALIB_CB_ADAPTIVE_THRESH+cv.CALIB_CB_NORMALIZE_IMAGE)
 
         # If found, add object points, image points (after refining them)                                
@@ -115,7 +109,7 @@ def camera_calibration():
 
             # Draw and display the corners if flag is true
             if SHOW_IMAGES:
-                cv.drawChessboardCorners(img, (9,6), corners2, ret)
+                cv.drawChessboardCorners(img, PATTERN_SIZE, corners2, ret)
                 cv.imshow('img', img)
                 cv.waitKey(500)
         else:
@@ -128,11 +122,10 @@ def camera_calibration():
     if len(objPoints) > 0 :
         print ("Running Calibration...")
         retval, cameraMatrix, distCoeffs, rvecs, tvecs = cv.calibrateCamera(objPoints, imgPoints, \
-                                                                             CHECKBOARD_SIZE, None, None)
+                                                                             PATTERN_SIZE, None, None)
         print_intrinsic_parameters(cameraMatrix, distCoeffs)
         reprojection_error(objPoints, imgPoints, cameraMatrix, distCoeffs, rvecs, tvecs)
 
-        if SAVE_PARAMETERS:
-            save_intrinsicParameters(cameraMatrix, distCoeffs)
+        save_intrinsicParameters(cameraMatrix, distCoeffs, PATH_SAVE_INTRINSIC_PARAMS)
     else:
         print("no points")

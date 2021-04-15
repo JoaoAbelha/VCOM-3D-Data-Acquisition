@@ -19,11 +19,12 @@ SHOW_AXIS_IMAGE = True
 
 '''
  * reads from the file, the intrinsic parameters of the camera
+ * params {PATH_SAVE_INTRINSIC_PARAMETERS}: the path where the intrinsic parameters were saved
  * returns a tuple with those values
 '''
-def readIntrinsicParameters():
+def readIntrinsicParameters(PATH_SAVE_INTRINSIC_PARAMETERS):
     objects = []
-    with (open("calibration/wide_dist_pickle.p", "rb")) as openfile:
+    with (open(PATH_SAVE_INTRINSIC_PARAMETERS, "rb")) as openfile:
         while True:
             try:
                 objects.append(pickle.load(openfile))
@@ -61,17 +62,19 @@ def draw(img, corners, imgpts):
 
 '''
  * param {img}: the image that we want to find the camera pose
+ * params {PATH_SAVE_INTRINSIC_PARAMETERS}: the path where the intrinsic parameters were saved
+ * params {PATTERN_SIZE}: the pattern the algorithm is going to look for in the chessboard
  * it calculates the camera position and the projection matrix
  * returns the camera position and the projection matrix
 '''
-def camera_position(img):
-    (mtx, dist) = readIntrinsicParameters()
+def camera_position(img, PATH_SAVE_INTRINSIC_PARAMETERS, PATTERN_SIZE):
+    (mtx, dist) = readIntrinsicParameters(PATH_SAVE_INTRINSIC_PARAMETERS)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    ret, corners = cv.findChessboardCorners(gray, (9, 6), None)
+    ret, corners = cv.findChessboardCorners(gray, PATTERN_SIZE, None)
 
     # 3d points
-    objp = np.zeros((9*6, 3), np.float32)
-    objp[:, :2] = np.mgrid[0:9, 0:6].T.reshape(-1, 2) * 22
+    objp = np.zeros((PATTERN_SIZE[0]* PATTERN_SIZE[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:PATTERN_SIZE[0], 0:PATTERN_SIZE[1]].T.reshape(-1, 2) * 22
 
     # solvePnP requires camera calibraiton
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
