@@ -7,7 +7,7 @@ import random as rng
 
 REAL_PENCIL_HEIGHT_MM = 105
 
-FOREGROUND_THRESHOLD = 127
+FOREGROUND_THRESHOLD = 50
 BACKGROUND_THRESHOLD = 127
 
 cursor_held = False
@@ -251,15 +251,16 @@ def decompose_image(background, foreground):
     if foreground is None:
         return bg_mask_aux, None
 
-    difference = cv.subtract(background, foreground)
+    difference = cv.subtract(foreground, background)
 
     diff_grey = cv.cvtColor(difference, cv.COLOR_BGR2GRAY)
     diff_eq = cv.equalizeHist(diff_grey)
     _, diff_mask_aux = cv.threshold(diff_eq, FOREGROUND_THRESHOLD, 255, cv.THRESH_BINARY | cv.THRESH_OTSU)
 
     bg_mask = cv.bitwise_and(bg_mask_aux, bg_mask_aux, mask = cv.bitwise_not(diff_mask_aux))
+    fg_mask = cv.bitwise_and(diff_mask_aux, bg_mask_aux)
 
-    return bg_mask_aux, bg_mask
+    return bg_mask, fg_mask
 
 def project_image_point_to_space(point, mtx, rotM, camera_pos, planes):
     point1 = project_image_point_to_plane(point, planes[0], mtx, rotM, camera_pos)
@@ -294,11 +295,11 @@ def light_calibration(image, mtx, rotM, camera_pos, planes, mask = None):
     three_channel_mask = cv.merge([mask,mask,mask])
     print(three_channel_mask.shape)
 
-    cv.imshow("img", three_channel_mask)
+    cv.imshow("img_three_channel", three_channel_mask)
     cv.waitKey(0)
 
     img_trimmed = cv.bitwise_or(image, cv.bitwise_not(three_channel_mask))
-    cv.imshow("img", img_trimmed)
+    cv.imshow("img_trimmed", img_trimmed)
     cv.waitKey(0)
 
     # Obtain scan line
