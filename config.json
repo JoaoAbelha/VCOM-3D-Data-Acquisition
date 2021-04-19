@@ -1,0 +1,16 @@
+{
+  "step1": {
+    "Calibration Images Folder": "./imgs/chessboard5/*.jpg",
+    "Chessboard Field Size": 22,
+    "Chessboard Pattern Size": [
+      9,
+      6
+    ],
+    "Path Save Intrisic Params": "calibration/wide_dist_pickle.p"
+  },
+  "step2": {
+    "Axis Size": 10,
+    "Chessboard Image": "./imgs/objs2/IMG_20210414_122106.jpg"
+  },
+  "Image": "./imgs/objs2/IMG_20210414_123048.jpg"
+}

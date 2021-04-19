@@ -6,17 +6,14 @@ import math
 
 '''
 Shadow detection step : Try to detect the shadow line on the image and get one line segment representing the shadow projection into the object
-* SHOW_IMAGES: if true, it shows the countors and line found
 '''
-
-SHOW_IMAGES = True
 
 '''
 * {param} frame : image from where we want to segment a line representing the shadow
 * return points of shadow line
 '''
 
-def getShadowPoints(frame):
+def getShadowPoints(frame, showSteps):
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     kernel_size = 7
@@ -59,9 +56,10 @@ def getShadowPoints(frame):
 
     frame_gray_copy = frame.copy()
     cv2.drawContours(frame_gray_copy, contours, -1, (0,255,0), 1)
-    plt.imshow(frame_gray_copy, vmin=0, cmap='gray')
-    plt.title('processed lines'), plt.xticks([]), plt.yticks([])
-    plt.show()
+    if showSteps:
+        plt.imshow(frame_gray_copy, vmin=0, cmap='gray')
+        plt.title('processed lines'), plt.xticks([]), plt.yticks([])
+        plt.show()
     cv2.imwrite('./imgs/contours_test.jpg',frame_gray_copy)
 
     new_contours = []
@@ -100,10 +98,10 @@ def getShadowPoints(frame):
     selected_contours = np.zeros((height,width,3), np.uint8)
     cv2.drawContours(selected_contours, new_contours, -1, (0,255,0), 1)
 
-    if SHOW_IMAGES:
+    if showSteps:
         cv2.imshow('img', selected_contours)
         cv2.waitKey(3000)
-    if SHOW_IMAGES:
+    if showSteps:
         cv2.destroyAllWindows()
 
     points = []
@@ -113,13 +111,13 @@ def getShadowPoints(frame):
                 points.append((x,y))
                 break
     
-    if SHOW_IMAGES:
+    if showSteps:
         line_img = np.zeros((height,width,3), np.uint8)
         for p in points:
             line_img[p[1]][p[0]] = 255
         cv2.imshow('img', line_img)
         cv2.waitKey(3000)
-    if SHOW_IMAGES:
+    if showSteps:
         cv2.destroyAllWindows()
     return points
     
