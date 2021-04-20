@@ -111,6 +111,18 @@ def validateArgs(args):
 
     return parseConfig(args.Config, False)
 
+'''
+* param {img}: image to undistort
+* param {mtx}: camera matrix
+* param {dist}: distortion parameters
+* returns the image undistorted
+'''
+def undistort(img, mtx, dist):
+    h,  w = img.shape[:2]
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
+    return dst
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -135,10 +147,12 @@ def main():
         camera_calibration(step1Config, args.steps)
         pathIntrinsic = step1Config['Path Save Intrisic Params']
 
-    position_normalized, projection_matrix = camera_position(
+    projection_matrix, mtx, dist= camera_position(
         step2Config, pathIntrinsic, step1Config['Chessboard Pattern Size'], args.steps)
 
     image = cv2.imread(config['Image'])
+    print('here')
+    image = undistort(image, mtx, dist)
     shadowPoints = []
 
     if args.version2 is None:

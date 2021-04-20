@@ -41,6 +41,29 @@ def readIntrinsicParameters(pathIntrinsic):
 
 
 '''
+* param {objpoints} : relative object points
+* param {imgpoints}:  image points
+* param {mtx}: camera matrix
+* param {dist}: distortion parameters
+* param {rvecs}: rotation vectors
+* param {tvecs}: translation vectors
+* prints and calculates the reprojection error
+* return: void
+'''
+
+
+def reprojection_error(objpoints, imgpoints, mtx, dist, rvecs, tvecs):
+    mean_error = 0
+
+    for i in range(len(objpoints)):
+        imgpoints2, _ = cv.projectPoints(
+            objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+        error = cv.norm(imgpoints[i], imgpoints2, cv.NORM_L2) / len(imgpoints2)
+        mean_error += error
+    print("Reprojection error= {}".format(mean_error / len(objpoints)))
+
+
+'''
 * param {img}: the image where the camera pose was calculated
 * param {corners}: the corners of the chessboard
 * param {imgpts}: the image points
@@ -78,12 +101,18 @@ def camera_position(step2Config, pathIntrinsic, patternSize, showSteps):
     objp[:, :2] = np.mgrid[0:patternSize[0],
                            0:patternSize[1]].T.reshape(-1, 2) * 22
 
+    objPoints = []
+    imgPoints = []
     # solvePnP requires camera calibraiton
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.0001)
     if ret == True:
+        objPoints.append(objp)
+
         corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
         #ret, rvec, tvec = cv.solvePnP(objp, corners2, mtx, dist)
         ret, rvec, tvec, inliers = cv.solvePnPRansac(objp, corners2, mtx, dist)
+ 
+        imgPoints.append(corners) ## heere
 
         axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, -3]]
                           ).reshape(-1, 3) * step2Config['Axis Size']
@@ -97,15 +126,15 @@ def camera_position(step2Config, pathIntrinsic, patternSize, showSteps):
 
         rotM = cv.Rodrigues(rvec)[0]
         real_word_position = -np.matrix(rotM).T * np.matrix(tvec)
-        position_normalized = np.linalg.inv(mtx) * real_word_position
+        #position_normalized = np.linalg.inv(mtx) * real_word_position
 
         print('real world position (X,Y,Z)= ({}, {}, {})'.format(
             real_word_position[0, 0], real_word_position[1, 0], real_word_position[2, 0]))
         # we can normalize the point: focal length = 1 and moves the origin to the centre of the image
-        print('normalize real world position (X,Y,Z)= ({}, {}, {})'.format(
-            position_normalized[0, 0], position_normalized[1, 0], position_normalized[2, 0]))
         print('projection matrix : ')
         print(getProjectionMatrix(mtx, rvec, tvec))
-        return (position_normalized, getProjectionMatrix(mtx, rvec, tvec))
+
+        reprojection_error(objPoints, imgPoints, mtx, dist, [rvec], [tvec])
+        return (getProjectionMatrix(mtx, rvec, tvec), mtx, dist)
     else:
         print('could not find position')

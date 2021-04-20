@@ -29,29 +29,6 @@ def save_intrinsicParameters(mtx, dist, PATH_SAVE_INTRINSIC_PARAMS):
 
 
 '''
-* param {objpoints} : relative object points
-* param {imgpoints}:  image points
-* param {mtx}: camera matrix
-* param {dist}: distortion parameters
-* param {rvecs}: rotation vectors
-* param {tvecs}: translation vectors
-* prints and calculates the reprojection error
-* return: void
-'''
-
-
-def reprojection_error(objpoints, imgpoints, mtx, dist, rvecs, tvecs):
-    mean_error = 0
-
-    for i in range(len(objpoints)):
-        imgpoints2, _ = cv.projectPoints(
-            objpoints[i], rvecs[i], tvecs[i], mtx, dist)
-        error = cv.norm(imgpoints[i], imgpoints2, cv.NORM_L2) / len(imgpoints2)
-        mean_error += error
-    print("Reprojection error= {}".format(mean_error / len(objpoints)))
-
-
-'''
 * param {cameraMatrix} : the camera matrix
 * param {distCoeffs}: distortion coefficient of the camera 
 * prints the camera matrix and distortion coefficients of the camera
@@ -129,8 +106,7 @@ def camera_calibration(step1Config, showSteps):
         retval, cameraMatrix, distCoeffs, rvecs, tvecs = cv.calibrateCamera(objPoints, imgPoints,
                                                                             step1Config['Chessboard Pattern Size'], None, None)
         print_intrinsic_parameters(cameraMatrix, distCoeffs)
-        reprojection_error(objPoints, imgPoints,
-                           cameraMatrix, distCoeffs, rvecs, tvecs)
+
 
         save_intrinsicParameters(
             cameraMatrix, distCoeffs, step1Config['Path Save Intrisic Params'])
