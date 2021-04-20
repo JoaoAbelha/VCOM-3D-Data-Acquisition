@@ -53,7 +53,7 @@ def processImage(frame_n):
     
     
     ret = np.concatenate((ret1, ret2, ret3, ret4), axis=0)
-    return shadow , ret
+    return shadow , line
 
 
 y_top = 5
@@ -102,8 +102,10 @@ while(cap.isOpened()):
     #print(points)
 
     key = cv2.waitKey(0)
-    while key not in [ord('q'), ord('k')]:
+    while key not in [ord('q'),ord('s'), ord('k')]:
         key = cv2.waitKey(0)
+    if key == ord('s'):
+        cv2.imwrite('./imgs/relatorio.jpg',imgs)
     if key == ord('q'):
         break
 

@@ -24,12 +24,12 @@ def getShadowPoints(frame):
     cl1 = clahe.apply(frame_gray)
 
     kernel = 9
-    blur = cv2.GaussianBlur(cl1,(kernel,kernel),0)
+    blur = cv2.bilateralFilter(cl1,kernel,100,100)
 
     lookUpTable = np.empty((1,256), np.uint8)
     gamma = 2
     for i in range(256):
-        lookUpTable[0,i] = np.clip( 2*i - 60 , 0 , 255)
+        lookUpTable[0,i] = np.clip( 2*i - 100 , 0 , 255)
     lut_img = cv2.LUT(blur, lookUpTable)
 
     ret,thres = cv2.threshold(lut_img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
@@ -41,17 +41,14 @@ def getShadowPoints(frame):
     abs_grad_y = cv2.convertScaleAbs(imgWithSobelY)
     grad = cv2.addWeighted(abs_grad_x, 0.1, abs_grad_y,0.9, 0)
 
-    kernel = 7
-    blur_new = cv2.GaussianBlur(grad,(kernel,kernel),0)
-
     kernel=cv2.getStructuringElement(cv2.MORPH_RECT,(7,7))
-    ellipse = cv2.morphologyEx(blur_new, cv2.MORPH_OPEN, kernel)
+    rect = cv2.morphologyEx(grad, cv2.MORPH_OPEN, kernel)
 
     thres = ~thres
     thres2 = cv2.dilate(thres,(3,1),iterations = 10)
 
-    process = cv2.bitwise_and(ellipse,ellipse,mask=thres2)
-    _,process = cv2.threshold(process,100,255,cv2.THRESH_BINARY)
+    process = cv2.bitwise_and(rect,rect,mask=thres2)
+    _,process = cv2.threshold(process,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
 
     opening = cv2.morphologyEx(process,cv2.MORPH_OPEN,(11,11))
 
