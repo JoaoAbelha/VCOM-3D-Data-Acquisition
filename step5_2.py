@@ -4,7 +4,17 @@ import os
 from matplotlib import pyplot as plt
 import math
 
+'''
+Shadow detection step : Try to detect the shadow line on the image and get one line segment representing the shadow projection into the object
+* SHOW_IMAGES: if true, it shows the countors and line found
+'''
+
 SHOW_IMAGES = True
+
+'''
+* {param} frame : image from where we want to segment a line representing the shadow
+* return points of shadow line
+'''
 
 def getShadowPoints(frame):
     frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)

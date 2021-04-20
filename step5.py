@@ -4,11 +4,19 @@ import os
 from matplotlib import pyplot as plt
 import math
 
+'''
+Shadow detection step : Try to detect the shadow line on the image and get one line segment representing the shadow projection into the object
+* SHOW_IMAGES: if true, it shows the countors and line found
+'''
+
 SHOW_IMAGES = True
 
 
-
-
+'''
+* param {frame_0} : initial frame without shadow
+* param {frame} : frame with shadow 
+* return mask of the difference between images representing the shadow
+'''
 def processImage(frame_0, frame):
 
     absdiff = cv2.absdiff(frame_0, frame)
@@ -28,8 +36,11 @@ def processImage(frame_0, frame):
     return result
 
 
-
-
+'''
+* param {img} : binary shadow image
+* param {direction} : get upper ou lower part of shadow
+* return points selected from shadow
+'''
 def getPointsVertical(img, direction):
     height,width = img.shape[:2]
 
@@ -39,15 +50,6 @@ def getPointsVertical(img, direction):
     points = []
     x_top = -1
     x_bot = -1
-
-    if img[y_top][width-1] == 255 or img[y_bot][width-1] == 255:
-        return points
-    for x_top in range(width-2, -1, -1):
-        if img[y_top][x_top] == 255:
-            break
-    for x_bot in range(width-2, -1, -1):
-        if img[y_bot][x_bot] == 255:
-            break
 
     if x_top == 0 or x_bot == 0:
         return points
@@ -62,7 +64,11 @@ def getPointsVertical(img, direction):
     return points
 
 
-
+'''
+* param {img} : binary shadow image
+* param {direction} : get left or right part of shadow
+* return points selected from shadow
+'''
 def getPointsHorizontal(img, direction):
 
     height,width = img.shape[:2]
@@ -74,18 +80,6 @@ def getPointsHorizontal(img, direction):
     y_left = -1
     y_right = -1
 
-    """if img[height-1][x_left] == 255 or img[height-1][x_right] == 255:
-        return points
-    for y_left in range(height-2, -1, -1):
-        if img[y_left][x_left] == 255:
-            break
-    for y_right in range(height-2, -1, -1):
-        if img[y_right][x_right] == 255:
-            break
-
-    if y_left == 0 or y_right == 0:
-        return points
-    """
 
     for x in range(x_left, x_right):
         interval = range(
@@ -96,36 +90,32 @@ def getPointsHorizontal(img, direction):
                 break
     return points
 
-
+'''
+* param {img} : binary shadow image
+* param {orientation} : which orientaion is shadow, horizontal or vertical
+* param {direction} : which part of shadow
+* return points selected from shadow
+'''
 def getPoints(points, orientation="vertical", direction="left"):
     if(orientation == "horizontal"):
         return getPointsHorizontal(points, direction)
     return getPointsVertical(points, direction)
 
-
+'''
+* param {poins} : shadow points
+return binary image representing shadow points
+'''
 def drawPoints(points):
     line = np.zeros((height, width, 3), np.uint8)
     for p in points:
         line[p[1]][p[0]] = (0, 0, 255)
     return line
 
-"""
-frame_0 = cv2.imread('./imgs/charger_0.jpg', 0)
-frame = cv2.imread('./imgs/charger_1.jpg', 0)
-
-processed = processImage(frame_0, frame)
-
-points1 = getPoints(processed, "horizontal", "down")
-points2 = getPoints(processed, "horizontal", "up")
-
-cv2.imshow('frame', np.concatenate((cv2.cvtColor(
-    processed, cv2.COLOR_GRAY2BGR), drawPoints(points1), drawPoints(points2)), axis=0))
-
-key = cv2.waitKey(0)
-while key not in [ord('q'), ord('k')]:
-    key = cv2.waitKey(0)
-"""
-
+'''
+* param {frame_0} : initial frame without shadow
+* param {frame} : frame with shadow 
+* return lower points of an horizontal shadow 
+'''
 def getShadowPoints_2(frame_0, frame_n):
     
     frame_0 = cv2.cvtColor(frame_0, cv2.COLOR_BGR2GRAY)

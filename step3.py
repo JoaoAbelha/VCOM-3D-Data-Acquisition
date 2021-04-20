@@ -285,25 +285,13 @@ def project_image_point_to_space(point, mtx, rotM, camera_pos, planes):
 def light_calibration(image, mtx, rotM, camera_pos, planes, mask = None):
     flat_camera_position = np.squeeze(np.asarray(camera_pos))
 
-    cv.imshow("img", image)
-    cv.waitKey(0)
-
-    white = np.full(image.shape, 255)
-    print(image.shape)
-    print(white.shape)
-    print(mask.shape)
-    three_channel_mask = cv.merge([mask,mask,mask])
-    print(three_channel_mask.shape)
-
-    cv.imshow("img_three_channel", three_channel_mask)
-    cv.waitKey(0)
-
-    img_trimmed = cv.bitwise_or(image, cv.bitwise_not(three_channel_mask))
-    cv.imshow("img_trimmed", img_trimmed)
-    cv.waitKey(0)
-
     # Obtain scan line
-    scan_line = getShadowPoints(img_trimmed)
+    grey_scan = cv.cvtColor(image, cv.COLOR_RGB2GRAY)
+    _, thresh_scan = cv.threshold(grey_scan, 235, 255,cv.THRESH_BINARY)
+    rgb_thresh_scan = cv.merge((thresh_scan, thresh_scan, thresh_scan))
+    cv.imshow("rgv", rgb_thresh_scan)
+    cv.waitKey()
+    scan_line = getShadowPoints(rgb_thresh_scan)
 
     if len(scan_line) < 3:
         return []
