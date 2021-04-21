@@ -11,19 +11,14 @@ from json import JSONDecodeError
 
 from step1 import camera_calibration
 from step2 import camera_position
-from step3 import light_calibration, calibrate_planes, calculate_plane, project_image_point_to_plane
+from step3 import shadowPlane
 from step5_2 import getShadowPoints
 from step5 import getShadowPoints_2
-from step6 import shadow3DPoints
+from step6 import get3DPoints
 
 '''
     Global configuration  and variables shared in steps
 '''
-
-MULTIPLE_PLANES = False
-
-IMG_NO_SHADOW = './imgs/alternate4/planes.png'
-PLANES_IMG = './imgs/alternate4/i (1).png'
 
 DISTANCE_BETWEEN_POINTS = 50
 
@@ -45,12 +40,15 @@ def reducePoints(objectPoints):
             current_point = p
     return points
 
+
 '''
 * param {config}: config file data
 * param {intrinsic}: boolean representing if an intrinsic param file was given
 * validates if the configuration file values are correct
 * returns void
 '''
+
+
 def validateConfig(config, intrinsic):
     if not os.path.isfile(config['Image']):
         sys.exit("Image in config file doesn't exist")
@@ -80,6 +78,15 @@ def validateConfig(config, intrinsic):
         sys.exit(
             'Missing properties required for step1. Validate your config file')
 
+    if 'step3' in config:
+        if not isinstance(config['step3']['Object Height'], numbers.Number):
+            sys.exit('Object Height in step3 must be a number')
+        if not os.path.isfile(config['step3']['Known Object Image']):
+            sys.exit("Known Object Image in step3 doesn't exist")
+    else:
+        sys.exit(
+            'Missing properties required for step3. Validate your config file')
+
 
 '''
 * param {config}: config file path
@@ -87,6 +94,8 @@ def validateConfig(config, intrinsic):
 * reads the config file and then validates
 * returns the data from the config file
 '''
+
+
 def parseConfig(config, intrinsic):
     if os.path.isfile(config):
         with open(config) as config_file:
@@ -100,11 +109,14 @@ def parseConfig(config, intrinsic):
     else:
         sys.exit("Config file doesn't exist")
 
+
 '''
 * param {args}: command line args
 * validates the command line args
 * returns the data from the config file
 '''
+
+
 def validateArgs(args):
     if args.version2 is not None:
         if not os.path.isfile(args.version2):
@@ -117,15 +129,19 @@ def validateArgs(args):
 
     return parseConfig(args.Config, False)
 
+
 '''
 * param {img}: image to undistort
 * param {mtx}: camera matrix
 * param {dist}: distortion parameters
 * returns the image undistorted
 '''
+
+
 def undistort(img, mtx, dist):
     h,  w = img.shape[:2]
-    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
+    newcameramtx, roi = cv2.getOptimalNewCameraMatrix(
+        mtx, dist, (w, h), 1, (w, h))
     dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
     return dst
 
@@ -147,73 +163,38 @@ def main():
     config = validateArgs(args)
     step1Config = config['step1']
     step2Config = config['step2']
+    step3Config = config['step3']
     pathIntrinsic = args.intrinsic
 
     if args.intrinsic is None:
         camera_calibration(step1Config, args.steps)
         pathIntrinsic = step1Config['Path Save Intrisic Params']
 
-    dist, mtx, rotM, real_word_position, projection_matrix = camera_position(
-        step2Config, pathIntrinsic, step1Config['Chessboard Pattern Size'], args.steps)
+    dist, mtx, projection_matrix = camera_position(
+        step2Config, pathIntrinsic, step1Config['Chessboard Pattern Size'], step1Config['Chessboard Field Size'], args.steps)
+
+    step3Image = cv2.imread(step3Config['Known Object Image'])
+    step3Image = undistort(step3Image, mtx, dist)
+    sPlane = shadowPlane(
+        step3Config, step3Image, projection_matrix, mtx, dist, args.steps)
+
+    print(sPlane)
 
     image = cv2.imread(config['Image'])
-    print('here')
     image = undistort(image, mtx, dist)
     shadowPoints = []
 
-    image_no_shadow = cv2.imread(IMG_NO_SHADOW)
-
-    objectPoints = None
-    if MULTIPLE_PLANES:
-        planes_img = cv2.imread(PLANES_IMG)
-        bg_mask, fg_mask, planes = calibrate_planes(mtx, rotM, real_word_position, planes_img, control_image=image_no_shadow)
-
-        shadow_image = cv2.absdiff(image_no_shadow, image)
-
-        shadow_image_background = cv2.bitwise_not(cv2.bitwise_and(shadow_image, shadow_image, mask=bg_mask))
-        shadow_plane = light_calibration(shadow_image_background, mtx, rotM, real_word_position, planes, mask = bg_mask)
-
-        shadow_image_foreground = cv2.bitwise_not(cv2.bitwise_and(shadow_image, shadow_image, mask=fg_mask))
-        cv2.imshow("sadfore", shadow_image_foreground)
-        shadowPoints = getShadowPoints(shadow_image_foreground, args.steps)
-
-        objectPoints = shadow3DPoints(shadowPoints, projection_matrix, shadow_plane)
+    if args.version2 is None:
+        shadowPoints = getShadowPoints(image, args.steps)
     else:
-        shadowPoints = None
-        if args.version2 is None:
-            shadowPoints = getShadowPoints(image, args.steps)
-        else:
-            image_no_shadow = cv2.imread(args.version2)
-            shadowPoints = getShadowPoints_2(image_no_shadow,image, args.steps)
+        image_no_shadow = cv2.imread(args.version2)
+        shadowPoints = getShadowPoints_2(
+            image_no_shadow, image, args.steps)
 
-        point1 = max(shadowPoints,key=lambda x: x[0])
-        point2 = min(shadowPoints,key=lambda x: x[0])
-        point3 = min(shadowPoints,key=lambda x: x[1])
+    objectPoints = get3DPoints(
+        shadowPoints, projection_matrix, sPlane)
 
-        print((point1,point2,point3))
-
-        #basePoints = shadow3DPoints([point1,point2], projection_matrix, [1,0,0,0])
-        uv1 = np.array([[point1[0],point1[1],1]], dtype=np.float32).T
-        uv2 = np.array([[point2[0],point2[1],1]], dtype=np.float32).T
-        uv3 = np.array([[point3[0],point3[1],1]], dtype=np.float32).T
-        p1 = project_image_point_to_plane(uv1, [1,0,0,0], mtx, rotM, real_word_position)
-        p2 = project_image_point_to_plane(uv2, [1,0,0,0], mtx, rotM, real_word_position) 
-        p3 = project_image_point_to_plane(uv3, [1,0,0,10], mtx, rotM, real_word_position) 
-        flat1 = np.squeeze(p1)
-        flat2 = np.squeeze(p2)
-        flat3 = np.squeeze(p3)
-
-        print((flat1,flat2))
-        print(flat3)
-
-        plane = calculate_plane(flat1,flat2,flat3)
-        print(plane)
-
-        objectPoints = shadow3DPoints(shadowPoints, projection_matrix, [1, 0, 0, 10])
-
-    #print(objectPoints)
     points = []
-
     current_point = objectPoints[0]
 
     for p in objectPoints:
@@ -222,34 +203,9 @@ def main():
             current_point = p
 
     points = reducePoints(objectPoints)
-
-    print(len(objectPoints))
-    print(len(points))
-    # print(points)
-    t = []
-    for p in points:
-        t.append(p[2])
-
-    n, bins, patches = plt.hist(x=t, bins='auto', color='#0504aa',
-                                alpha=0.7, rwidth=0.85)
-    plt.show()
-
-    ##
-    final_list = np.array([])
-    binlist = np.c_[bins[:-1], bins[1:]]
-    d = np.array(t)
-    for i in range(len(binlist)):
-        if i == len(binlist)-1:
-            l = d[(d >= binlist[i, 0]) & (d <= binlist[i, 1])]
-        else:
-            l = d[(d >= binlist[i, 0]) & (d < binlist[i, 1])]
-        if l.shape[0] < 10:
-            final_list = np.append(final_list, l)
-    ##
-
+    print(points)
     fig = plt.figure()
     ax = plt.axes()
-    print(len(final_list))
 
     for curr, nxt in zip(points, points[1:]):
         distance = math.sqrt(

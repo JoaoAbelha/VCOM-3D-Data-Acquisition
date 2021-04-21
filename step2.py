@@ -90,7 +90,7 @@ def draw(img, corners, imgpts):
 '''
 
 
-def camera_position(step2Config, pathIntrinsic, patternSize, showSteps):
+def camera_position(step2Config, pathIntrinsic, patternSize, fieldSize, showSteps):
     img = cv.imread(step2Config['Chessboard Image'])
     (mtx, dist) = readIntrinsicParameters(pathIntrinsic)
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -99,7 +99,7 @@ def camera_position(step2Config, pathIntrinsic, patternSize, showSteps):
     # 3d points
     objp = np.zeros((patternSize[0] * patternSize[1], 3), np.float32)
     objp[:, :2] = np.mgrid[0:patternSize[0],
-                           0:patternSize[1]].T.reshape(-1, 2) * 22
+                           0:patternSize[1]].T.reshape(-1, 2) * fieldSize
 
     objPoints = []
     imgPoints = []
@@ -111,8 +111,8 @@ def camera_position(step2Config, pathIntrinsic, patternSize, showSteps):
         corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
         #ret, rvec, tvec = cv.solvePnP(objp, corners2, mtx, dist)
         ret, rvec, tvec, inliers = cv.solvePnPRansac(objp, corners2, mtx, dist)
- 
-        imgPoints.append(corners) ## heere
+
+        imgPoints.append(corners)  # heere
 
         axis = np.float32([[3, 0, 0], [0, 3, 0], [0, 0, -3]]
                           ).reshape(-1, 3) * step2Config['Axis Size']
@@ -135,6 +135,6 @@ def camera_position(step2Config, pathIntrinsic, patternSize, showSteps):
         print(getProjectionMatrix(mtx, rvec, tvec))
 
         reprojection_error(objPoints, imgPoints, mtx, dist, [rvec], [tvec])
-        return (dist, mtx, rotM, real_word_position, getProjectionMatrix(mtx, rvec, tvec))
+        return (dist, mtx, getProjectionMatrix(mtx, rvec, tvec))
     else:
         print('could not find position')
