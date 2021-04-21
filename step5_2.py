@@ -97,13 +97,12 @@ def getShadowPoints(frame, showSteps):
 
     if showSteps:
         cv2.imshow('img', selected_contours)
-        cv2.waitKey(3000)
-    if showSteps:
+        cv2.waitKey()
         cv2.destroyAllWindows()
 
     points = []
     for x in range(width):
-        for y in range(height):
+        for y in range(height-1,0,-1):
             if (selected_contours[y][x] == [0,255,0]).all():
                 points.append((x,y))
                 break
@@ -113,8 +112,7 @@ def getShadowPoints(frame, showSteps):
         for p in points:
             line_img[p[1]][p[0]] = 255
         cv2.imshow('img', line_img)
-        cv2.waitKey(3000)
-    if showSteps:
+        cv2.waitKey()
         cv2.destroyAllWindows()
     return points
     
