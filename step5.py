@@ -29,9 +29,7 @@ def processImage(frame_0, frame):
     ret,thresh_n = cv2.threshold(frame,150,255,cv2.THRESH_BINARY_INV)   
 
     thresh_absdiff = cv2.absdiff(thresh_0,thresh_n)
-    cv2.imshow('thresh_absdiff', thresh_absdiff)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+
     result = cv2.bitwise_and(absdiff_thresh , thresh_absdiff)
     result = cv2.morphologyEx(result, cv2.MORPH_ERODE, (5, 5))
     result = cv2.morphologyEx(result, cv2.MORPH_ERODE, (5, 5))
@@ -136,11 +134,6 @@ def getShadowPoints_2(frame_0, frame_n, showSteps):
 
     frame_0 = cv2.cvtColor(frame_0, cv2.COLOR_BGR2GRAY)
     frame_n = cv2.cvtColor(frame_n, cv2.COLOR_BGR2GRAY)
-    cv2.imshow('img', frame_0)
-    cv2.waitKey()
-    cv2.imshow('img', frame_n)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
 
     height, width = frame_0.shape[:2]
 
