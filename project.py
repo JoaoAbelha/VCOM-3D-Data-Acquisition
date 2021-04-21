@@ -219,7 +219,7 @@ def main():
             ax.scatter(curr[0], -curr[2], c=['gray'])
             ax.scatter(nxt[0], -nxt[2], c=['gray'])
 
-    plt.ylim([-200, 0])
+    #plt.ylim([-200, 0])
     ax.set_xlabel('X Label')
     ax.set_ylabel('Z Label')
     plt.show()

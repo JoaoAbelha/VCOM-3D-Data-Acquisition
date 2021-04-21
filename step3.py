@@ -386,14 +386,14 @@ def shadowPlane(step3Config, image, projection_matrix, mtx, dist, steps):
     point3 = min(shadowPoints, key=lambda x: x[1])
 
     if steps:
-        img = np.zeros(iamge)
-        cv.circle(img, point1,
+        #img = np.zeros(image)
+        cv.circle(image, point1,
                   radius=5, color=(0, 255, 0), thickness=1)
-        cv.circle(img, point2,
+        cv.circle(image, point2,
                   radius=5, color=(255, 0, 0), thickness=1)
-        cv.circle(img, point3,
+        cv.circle(image, point3,
                   radius=5, color=(0, 0, 255), thickness=1)
-        cv.imshow('Points to calulate shadow plane', img)
+        cv.imshow('Points to calulate shadow plane', image)
         cv.waitKey(5000)
         cv.destroyAllWindows()
 
