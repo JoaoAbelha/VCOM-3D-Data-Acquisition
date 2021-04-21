@@ -57,7 +57,6 @@ def getShadowPoints(frame, showSteps):
         plt.imshow(frame_gray_copy, vmin=0, cmap='gray')
         plt.title('processed lines'), plt.xticks([]), plt.yticks([])
         plt.show()
-        cv2.imwrite('./imgs/contours_test.jpg',frame_gray_copy)
 
     new_contours = []
 
@@ -98,7 +97,7 @@ def getShadowPoints(frame, showSteps):
     cv2.drawContours(selected_contours, new_contours, -1, (0,255,0), 1)
 
     if showSteps:
-        cv2.imshow('img', selected_contours)
+        cv2.imshow('selected contours', selected_contours)
         cv2.waitKey()
         cv2.destroyAllWindows()
 
@@ -112,8 +111,8 @@ def getShadowPoints(frame, showSteps):
     if showSteps:
         line_img = np.zeros((height,width,3), np.uint8)
         for p in points:
-            line_img[p[1]][p[0]] = 255
-        cv2.imshow('img', line_img)
+            cv2.circle(line_img, (p[0],p[1]), radius=2, color=(0,0,255), thickness=-3)
+        cv2.imshow('lines', line_img)
         cv2.waitKey()
         cv2.destroyAllWindows()
     return points
