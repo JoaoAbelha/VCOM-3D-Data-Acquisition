@@ -29,9 +29,7 @@ def processImage(frame_0, frame):
     ret,thresh_n = cv2.threshold(frame,150,255,cv2.THRESH_BINARY_INV)   
 
     thresh_absdiff = cv2.absdiff(thresh_0,thresh_n)
-    cv2.imshow('thresh_absdiff', thresh_absdiff)
-    cv2.waitKey()
-    cv2.destroyAllWindows()
+
     result = cv2.bitwise_and(absdiff_thresh , thresh_absdiff)
     result = cv2.morphologyEx(result, cv2.MORPH_ERODE, (5, 5))
     result = cv2.morphologyEx(result, cv2.MORPH_ERODE, (5, 5))
