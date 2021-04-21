@@ -203,7 +203,7 @@ def main():
             current_point = p
 
     points = reducePoints(objectPoints)
-    #print(points)
+    # print(points)
     fig = plt.figure()
     ax = plt.axes()
 

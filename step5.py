@@ -18,19 +18,24 @@ Shadow detection step : Try to detect the shadow line on the image and get one l
 
 def processImage(frame_0, frame):
 
-    absdiff = cv2.absdiff(frame_0, frame)
-    ret, absdiff_thresh = cv2.threshold(absdiff, 40, 255, cv2.THRESH_BINARY)
+    """absdiff = cv2.absdiff(frame_0, frame)
+    ret, absdiff_thresh = cv2.threshold(absdiff,40,255,cv2.THRESH_BINARY)
     result = cv2.morphologyEx(absdiff_thresh, cv2.MORPH_OPEN, (11, 11))
     result = cv2.morphologyEx(absdiff_thresh, cv2.MORPH_CLOSE, (11, 11))
-
-    """absdiff = cv2.absdiff(frame_0,frame)
-    ret, absdiff_thresh = cv2.threshold(absdiff,40,255,cv2.THRESH_BINARY)
-
+    """
+    absdiff = cv2.absdiff(frame_0,frame)
+    ret, absdiff_thresh = cv2.threshold(absdiff,0,255,cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     ret,thresh_0 = cv2.threshold(frame_0,150,255,cv2.THRESH_BINARY_INV)
-    ret,thresh_n = cv2.threshold(frame,150,255,cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)   
+    ret,thresh_n = cv2.threshold(frame,150,255,cv2.THRESH_BINARY_INV)   
 
     thresh_absdiff = cv2.absdiff(thresh_0,thresh_n)
-    result = cv2.bitwise_and(absdiff_thresh , thresh_absdiff)"""
+    cv2.imshow('thresh_absdiff', thresh_absdiff)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+    result = cv2.bitwise_and(absdiff_thresh , thresh_absdiff)
+    result = cv2.morphologyEx(result, cv2.MORPH_ERODE, (5, 5))
+    result = cv2.morphologyEx(result, cv2.MORPH_ERODE, (5, 5))
+    result = cv2.morphologyEx(result, cv2.MORPH_OPEN, (5, 5))
 
     return result
 
@@ -131,6 +136,11 @@ def getShadowPoints_2(frame_0, frame_n, showSteps):
 
     frame_0 = cv2.cvtColor(frame_0, cv2.COLOR_BGR2GRAY)
     frame_n = cv2.cvtColor(frame_n, cv2.COLOR_BGR2GRAY)
+    cv2.imshow('img', frame_0)
+    cv2.waitKey()
+    cv2.imshow('img', frame_n)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
     height, width = frame_0.shape[:2]
 
@@ -139,7 +149,7 @@ def getShadowPoints_2(frame_0, frame_n, showSteps):
 
     if showSteps:
         cv2.imshow('img', processed)
-        cv2.waitKey(5000)
+        cv2.waitKey()
         cv2.destroyAllWindows()
 
     if showSteps:
