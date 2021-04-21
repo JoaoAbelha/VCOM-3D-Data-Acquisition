@@ -49,7 +49,7 @@ def reducePoints(objectPoints):
 '''
 
 
-def validateConfig(config, intrinsic):
+def validateConfig(config, intrinsic, plane):
     if not os.path.isfile(config['Image']):
         sys.exit("Image in config file doesn't exist")
 
@@ -78,14 +78,15 @@ def validateConfig(config, intrinsic):
         sys.exit(
             'Missing properties required for step1. Validate your config file')
 
-    if 'step3' in config:
-        if not isinstance(config['step3']['Object Height'], numbers.Number):
-            sys.exit('Object Height in step3 must be a number')
-        if not os.path.isfile(config['step3']['Known Object Image']):
-            sys.exit("Known Object Image in step3 doesn't exist")
-    else:
-        sys.exit(
-            'Missing properties required for step3. Validate your config file')
+    if plane:
+        if 'step3' in config:
+            if not isinstance(config['step3']['Object Height'], numbers.Number):
+                sys.exit('Object Height in step3 must be a number')
+            if not os.path.isfile(config['step3']['Known Object Image']):
+                sys.exit("Known Object Image in step3 doesn't exist")
+        else:
+            sys.exit(
+                'Missing properties required for step3. Validate your config file')
 
 
 '''
@@ -96,12 +97,12 @@ def validateConfig(config, intrinsic):
 '''
 
 
-def parseConfig(config, intrinsic):
+def parseConfig(config, intrinsic, plane):
     if os.path.isfile(config):
         with open(config) as config_file:
             try:
                 data = json.load(config_file)
-                validateConfig(data, intrinsic)
+                validateConfig(data, intrinsic, plane)
                 return data
             except JSONDecodeError:
                 sys.exit(
@@ -125,9 +126,9 @@ def validateArgs(args):
     if args.intrinsic is not None:
         if not os.path.isfile(args.intrinsic):
             sys.exit("Intrinsic params file doesn't exist")
-        return parseConfig(args.Config, True)
+        return parseConfig(args.Config, True, args.plane)
 
-    return parseConfig(args.Config, False)
+    return parseConfig(args.Config, False, args.plane)
 
 
 '''
@@ -165,7 +166,6 @@ def main():
     config = validateArgs(args)
     step1Config = config['step1']
     step2Config = config['step2']
-    step3Config = config['step3']
     pathIntrinsic = args.intrinsic
 
     if args.intrinsic is None:
@@ -174,14 +174,14 @@ def main():
 
     dist, mtx, projection_matrix = camera_position(
         step2Config, pathIntrinsic, step1Config['Chessboard Pattern Size'], step1Config['Chessboard Field Size'], args.steps)
-    
+
     sPlane = None
     if args.plane:
+        step3Config = config['step3']
         step3Image = cv2.imread(step3Config['Known Object Image'])
         step3Image = undistort(step3Image, mtx, dist)
         sPlane = shadowPlane(
-            step3Config, step3Image, projection_matrix, mtx, dist, args.steps)
-        print(sPlane)
+            step3Config, step3Image, projection_matrix,  args.steps)
 
     image = cv2.imread(config['Image'])
     image = undistort(image, mtx, dist)
@@ -195,20 +195,10 @@ def main():
             image_no_shadow, image, args.steps)
     if args.plane:
         objectPoints = get3DPoints(
-            shadowPoints, projection_matrix, [-sPlane[0],sPlane[1],-sPlane[2],sPlane[3]])
+            shadowPoints, projection_matrix, [-sPlane[0], sPlane[1], -sPlane[2], sPlane[3]])
     else:
         objectPoints = get3DPoints(
-            shadowPoints, projection_matrix, [0,1,0,150])
-
-    counter = 0
-    for p in objectPoints:
-        if counter > 200:
-            break
-        print(counter)
-        print(shadowPoints[counter])
-        result = np.dot(projection_matrix, np.append(p, 1))
-        print(result[0]/result[2], result[1]/result[2])
-        counter += 1
+            shadowPoints, projection_matrix, [0, 1, 0, 150])
 
     points = []
     current_point = objectPoints[0]
