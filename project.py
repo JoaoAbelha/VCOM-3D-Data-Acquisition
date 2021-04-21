@@ -184,6 +184,7 @@ def main():
             shadowPoints = getShadowPoints(image, args.steps)
         else:
             image_no_shadow = cv2.imread(args.version2)
+            image_no_shadow = undistort(image_no_shadow, mtx, dist)
             shadowPoints = getShadowPoints_2(image_no_shadow,image, args.steps)
 
         point1 = max(shadowPoints,key=lambda x: x[0])
