@@ -34,7 +34,7 @@ def reducePoints(objectPoints):
     current_point = objectPoints[0]
 
     for p in objectPoints:
-        if math.dist(current_point, p) >= 5:
+        if math.dist(current_point, p) >= 2:
             points.append(current_point)
             current_point = p
     return points
