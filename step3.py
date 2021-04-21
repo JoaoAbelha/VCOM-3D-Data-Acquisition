@@ -136,17 +136,18 @@ def getUVcoords(img):
 
 
 def calculate_plane(p1, p2, p3):
-    vector12 = p2 - p1
-    vector12 = vector12 / np.linalg.norm(vector12)
-    vector23 = p3 - p2
-    vector23 = vector23 / np.linalg.norm(vector23)
+    v1 = p3 - p1
+    v2 = p2 - p1
+    v1 = v1 / np.linalg.norm(v1)
+    v2 = v2 / np.linalg.norm(v2)
 
-    normal = np.cross(vector12, vector23)
+    cp = np.cross(v1, v2)
+    a, b, c = cp
 
-    A, B, C = [normal[i] for i in range(0, len(normal))]
-    D = A*p1[0] + B*p1[1] + C*p1[2]
+    # This evaluates a * x3 + b * y3 + c * z3 which equals d
+    d = np.dot(cp, p3)
 
-    return [A, B, C, D]
+    return [a, b, c, d]
 
 # returns the A, B, C, and D components of a plane that's perpendicular to x = 0 and contains the points passed as arguments
 

@@ -194,6 +194,16 @@ def main():
     objectPoints = get3DPoints(
         shadowPoints, projection_matrix, sPlane)
 
+    counter = 0
+    for p in objectPoints:
+        if counter > 500:
+            break
+        print(counter)
+        print(shadowPoints[counter])
+        result = np.dot(projection_matrix, np.append(p, 1))
+        print(result[0]/result[2], result[1]/result[2])
+        counter += 1
+
     points = []
     current_point = objectPoints[0]
 
