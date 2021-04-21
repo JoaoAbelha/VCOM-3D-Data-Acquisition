@@ -20,7 +20,7 @@ from step6 import get3DPoints
     Global configuration  and variables shared in steps
 '''
 
-DISTANCE_BETWEEN_POINTS = 50
+DISTANCE_BETWEEN_POINTS = 1000
 
 '''
     * param {objectPoints}: the points that were found through shadow segmentation
@@ -35,7 +35,7 @@ def reducePoints(objectPoints):
     current_point = objectPoints[0]
 
     for p in objectPoints:
-        if math.dist(current_point, p) >= 5:
+        if math.dist(current_point, p) >= 2:
             points.append(current_point)
             current_point = p
     return points
@@ -203,7 +203,7 @@ def main():
             current_point = p
 
     points = reducePoints(objectPoints)
-    print(points)
+    #print(points)
     fig = plt.figure()
     ax = plt.axes()
 
@@ -211,15 +211,15 @@ def main():
         distance = math.sqrt(
             ((curr[0]-nxt[0])**2)+((curr[1]-nxt[1])**2)+((curr[2]-nxt[2])**2))
         if distance < DISTANCE_BETWEEN_POINTS:
-            yline = np.linspace(curr[0], nxt[0], num=2)
+            yline = np.linspace(curr[1], nxt[1], num=2)
             zline = np.linspace(-curr[2], -nxt[2], num=2)
 
             ax.plot(yline, zline, 'gray')
         else:
-            ax.scatter(curr[0], -curr[2], c=['gray'])
-            ax.scatter(nxt[0], -nxt[2], c=['gray'])
+            ax.scatter(curr[1], -curr[2], c=['gray'])
+            ax.scatter(nxt[1], -nxt[2], c=['gray'])
 
-    #plt.ylim([-200, 0])
+    #plt.ylim([-100, 200])
     ax.set_xlabel('X Label')
     ax.set_ylabel('Z Label')
     plt.show()
