@@ -135,6 +135,6 @@ def camera_position(step2Config, pathIntrinsic, patternSize, showSteps):
         print(getProjectionMatrix(mtx, rvec, tvec))
 
         reprojection_error(objPoints, imgPoints, mtx, dist, [rvec], [tvec])
-        return (getProjectionMatrix(mtx, rvec, tvec), mtx, dist)
+        return (dist, mtx, rotM, real_word_position, getProjectionMatrix(mtx, rvec, tvec))
     else:
         print('could not find position')

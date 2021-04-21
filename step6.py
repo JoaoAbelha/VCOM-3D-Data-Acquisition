@@ -22,7 +22,7 @@ DEFAUL_SHADOW_PLANE = np.array([0, 1, 0, 0])
 * params {shadowPlane}: shadow plane from the previous steps
 * returns the 3D point corresponding to the image point (i,j) 
 '''
-def calculate3DPoint(i, j, projectionMatrix, shadowPlane=DEFAUL_SHADOW_PLANE):
+def calculate3DPoint(i, j, projectionMatrix, shadowPlane):
     firstEquation = np.array([
         projectionMatrix[2][0] * i - projectionMatrix[0][0],
         projectionMatrix[2][1] * i - projectionMatrix[0][1],
@@ -50,10 +50,10 @@ def calculate3DPoint(i, j, projectionMatrix, shadowPlane=DEFAUL_SHADOW_PLANE):
 * params {shadowPlane}: shadow plane from the previous steps
 * returns the 3D points corresponding to the points in the list 
 '''
-def shadow3DPoints(points, projectionMatrix, shadowPlane=DEFAUL_SHADOW_PLANE):
+def shadow3DPoints(points, projectionMatrix, shadowPlane):
     shadowPoints3D = []
     for p in points:
-        point3D = calculate3DPoint(p[0], p[1], projectionMatrix)
+        point3D = calculate3DPoint(p[0], p[1], projectionMatrix, shadowPlane)
         #shadowPoints3D = np.append(shadowPoints3D, point3D)
         shadowPoints3D.append(point3D)
     return shadowPoints3D

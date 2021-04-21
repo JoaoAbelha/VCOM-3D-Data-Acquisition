@@ -11,6 +11,7 @@ from json import JSONDecodeError
 
 from step1 import camera_calibration
 from step2 import camera_position
+from step3 import light_calibration, calibrate_planes, calculate_plane, project_image_point_to_plane
 from step5_2 import getShadowPoints
 from step5 import getShadowPoints_2
 from step6 import shadow3DPoints
@@ -18,8 +19,13 @@ from step6 import shadow3DPoints
 '''
     Global configuration  and variables shared in steps
 '''
-DISTANCE_BETWEEN_POINTS = 50
 
+MULTIPLE_PLANES = False
+
+IMG_NO_SHADOW = './imgs/alternate4/planes.png'
+PLANES_IMG = './imgs/alternate4/i (1).png'
+
+DISTANCE_BETWEEN_POINTS = 50
 
 '''
     * param {objectPoints}: the points that were found through shadow segmentation
@@ -147,7 +153,7 @@ def main():
         camera_calibration(step1Config, args.steps)
         pathIntrinsic = step1Config['Path Save Intrisic Params']
 
-    projection_matrix, mtx, dist= camera_position(
+    dist, mtx, rotM, real_word_position, projection_matrix = camera_position(
         step2Config, pathIntrinsic, step1Config['Chessboard Pattern Size'], args.steps)
 
     image = cv2.imread(config['Image'])
@@ -155,13 +161,66 @@ def main():
     image = undistort(image, mtx, dist)
     shadowPoints = []
 
-    if args.version2 is None:
-        shadowPoints = getShadowPoints(image, args.steps)
-    else:
-        image_no_shadow = cv2.imread(args.version2)
-        shadowPoints = getShadowPoints_2(image_no_shadow,image, args.steps)
+    image_no_shadow = cv2.imread(IMG_NO_SHADOW)
 
-    objectPoints = shadow3DPoints(shadowPoints, projection_matrix)
+    objectPoints = None
+    if MULTIPLE_PLANES:
+        planes_img = cv2.imread(PLANES_IMG)
+        bg_mask, fg_mask, planes = calibrate_planes(mtx, rotM, real_word_position, planes_img, control_image=image_no_shadow)
+
+        shadow_image = cv2.absdiff(image_no_shadow, image)
+
+        shadow_image_background = cv2.bitwise_not(cv2.bitwise_and(shadow_image, shadow_image, mask=bg_mask))
+        shadow_plane = light_calibration(shadow_image_background, mtx, rotM, real_word_position, planes, mask = bg_mask)
+
+        shadow_image_foreground = cv2.bitwise_not(cv2.bitwise_and(shadow_image, shadow_image, mask=fg_mask))
+        cv2.imshow("sadfore", shadow_image_foreground)
+        shadowPoints = getShadowPoints(shadow_image_foreground, args.steps)
+
+        objectPoints = shadow3DPoints(shadowPoints, projection_matrix, shadow_plane)
+    else:
+        shadowPoints = None
+        if args.version2 is None:
+            shadowPoints = getShadowPoints(image, args.steps)
+        else:
+            image_no_shadow = cv2.imread(args.version2)
+            shadowPoints = getShadowPoints_2(image_no_shadow,image, args.steps)
+
+        point1 = max(shadowPoints,key=lambda x: x[0])
+        point2 = min(shadowPoints,key=lambda x: x[0])
+        point3 = min(shadowPoints,key=lambda x: x[1])
+
+        print((point1,point2,point3))
+
+        #basePoints = shadow3DPoints([point1,point2], projection_matrix, [1,0,0,0])
+        uv1 = np.array([[point1[0],point1[1],1]], dtype=np.float32).T
+        uv2 = np.array([[point2[0],point2[1],1]], dtype=np.float32).T
+        uv3 = np.array([[point3[0],point3[1],1]], dtype=np.float32).T
+        p1 = project_image_point_to_plane(uv1, [1,0,0,0], mtx, rotM, real_word_position)
+        p2 = project_image_point_to_plane(uv2, [1,0,0,0], mtx, rotM, real_word_position) 
+        p3 = project_image_point_to_plane(uv3, [1,0,0,10], mtx, rotM, real_word_position) 
+        flat1 = np.squeeze(p1)
+        flat2 = np.squeeze(p2)
+        flat3 = np.squeeze(p3)
+
+        print((flat1,flat2))
+        print(flat3)
+
+        plane = calculate_plane(flat1,flat2,flat3)
+        print(plane)
+
+        objectPoints = shadow3DPoints(shadowPoints, projection_matrix, [0, 1, 0, 150])
+
+    #print(objectPoints)
+    points = []
+
+    current_point = objectPoints[0]
+
+    for p in objectPoints:
+        if math.dist(current_point, p) >= 5:
+            points.append(current_point)
+            current_point = p
+
     points = reducePoints(objectPoints)
 
     print(len(objectPoints))
@@ -204,7 +263,7 @@ def main():
             ax.scatter(curr[0], -curr[2], c=['gray'])
             ax.scatter(nxt[0], -nxt[2], c=['gray'])
 
-    plt.ylim([-200, 0])
+    plt.ylim([-100, 200])
     ax.set_xlabel('X Label')
     ax.set_ylabel('Z Label')
     plt.show()

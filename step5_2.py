@@ -57,7 +57,7 @@ def getShadowPoints(frame, showSteps):
         plt.imshow(frame_gray_copy, vmin=0, cmap='gray')
         plt.title('processed lines'), plt.xticks([]), plt.yticks([])
         plt.show()
-    cv2.imwrite('./imgs/contours_test.jpg',frame_gray_copy)
+        cv2.imwrite('./imgs/contours_test.jpg',frame_gray_copy)
 
     new_contours = []
 
@@ -74,6 +74,8 @@ def getShadowPoints(frame, showSteps):
                 current_cnt = cnt
     new_contours.append(current_cnt)
 
+    min_allowed = tuple(current_cnt[current_cnt[:,:,1].argmax()][0])[1] + height/8
+
     while current_cnt is not None:
         pos = tuple(current_cnt[current_cnt[:,:,0].argmax()][0])
         new_cnt = None
@@ -81,7 +83,7 @@ def getShadowPoints(frame, showSteps):
         for cnt in contours :
             for point in cnt:
                 d = math.dist(point[0], pos)
-                if point[0][0] <= pos[0]:
+                if point[0][0] <= pos[0] or point[0][1] >= min_allowed:
                     continue
                 if len(new_contours) == 1 and point[0][1] > pos[1]:
                     continue
