@@ -153,6 +153,8 @@ def main():
     parser.add_argument(
         '-s', '--steps', help='Show the results of the intermediate steps', action='store_true')
     parser.add_argument(
+        '-p', '--plane', help='Calculate shadow plain equation', action='store_true')
+    parser.add_argument(
         '-v2', '--version2', help='Path to image without shadow used in version 2', action='store', type=str)
     parser.add_argument(
         '-i', '--intrinsic', help='Path to intrinsic params file', action='store', type=str)
@@ -172,13 +174,14 @@ def main():
 
     dist, mtx, projection_matrix = camera_position(
         step2Config, pathIntrinsic, step1Config['Chessboard Pattern Size'], step1Config['Chessboard Field Size'], args.steps)
-
-    step3Image = cv2.imread(step3Config['Known Object Image'])
-    step3Image = undistort(step3Image, mtx, dist)
-    sPlane = shadowPlane(
-        step3Config, step3Image, projection_matrix, mtx, dist, args.steps)
-
-    print(sPlane)
+    
+    sPlane = None
+    if args.plane:
+        step3Image = cv2.imread(step3Config['Known Object Image'])
+        step3Image = undistort(step3Image, mtx, dist)
+        sPlane = shadowPlane(
+            step3Config, step3Image, projection_matrix, mtx, dist, args.steps)
+        print(sPlane)
 
     image = cv2.imread(config['Image'])
     image = undistort(image, mtx, dist)
@@ -190,9 +193,12 @@ def main():
         image_no_shadow = cv2.imread(args.version2)
         shadowPoints = getShadowPoints_2(
             image_no_shadow, image, args.steps)
-
-    objectPoints = get3DPoints(
-        shadowPoints, projection_matrix, [-sPlane[0],sPlane[1],-sPlane[2],sPlane[3]])
+    if args.plane:
+        objectPoints = get3DPoints(
+            shadowPoints, projection_matrix, [-sPlane[0],sPlane[1],-sPlane[2],sPlane[3]])
+    else:
+        objectPoints = get3DPoints(
+            shadowPoints, projection_matrix, [0,1,0,150])
 
     counter = 0
     for p in objectPoints:
@@ -217,14 +223,14 @@ def main():
     fig = plt.figure()
     ax = plt.axes()
 
-    p1 = 1
+    p0 = 0
     p2 = 2
 
     for curr, nxt in zip(points, points[1:]):
         distance = math.sqrt(
             ((curr[0]-nxt[0])**2)+((curr[1]-nxt[1])**2)+((curr[2]-nxt[2])**2))
         if distance < DISTANCE_BETWEEN_POINTS:
-            yline = np.linspace(curr[p1], nxt[p1], num=2)
+            yline = np.linspace(curr[p0], nxt[p0], num=2)
             zline = np.linspace(-curr[p2], -nxt[p2], num=2)
 
             ax.plot(yline, zline, 'gray')
