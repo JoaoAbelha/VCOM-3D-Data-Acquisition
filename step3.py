@@ -70,6 +70,6 @@ def shadowPlane(step3Config, image, projection_matrix, steps):
     point33D = calculate3DPoint(point3[0], point3[1], projection_matrix, [
                                 1, 0, 0, step3Config['Object Height']])
 
-    print(point13D, point23D, point33D)
+    #print(point13D, point23D, point33D)
 
     return calculate_plane(np.asarray(point13D), np.asarray(point23D), np.asarray(point33D))
