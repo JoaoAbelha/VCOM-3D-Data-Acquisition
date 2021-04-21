@@ -192,11 +192,11 @@ def main():
             image_no_shadow, image, args.steps)
 
     objectPoints = get3DPoints(
-        shadowPoints, projection_matrix, sPlane)
+        shadowPoints, projection_matrix, [-sPlane[0],sPlane[1],-sPlane[2],sPlane[3]])
 
     counter = 0
     for p in objectPoints:
-        if counter > 500:
+        if counter > 200:
             break
         print(counter)
         print(shadowPoints[counter])
@@ -217,17 +217,20 @@ def main():
     fig = plt.figure()
     ax = plt.axes()
 
+    p1 = 1
+    p2 = 2
+
     for curr, nxt in zip(points, points[1:]):
         distance = math.sqrt(
             ((curr[0]-nxt[0])**2)+((curr[1]-nxt[1])**2)+((curr[2]-nxt[2])**2))
         if distance < DISTANCE_BETWEEN_POINTS:
-            yline = np.linspace(curr[1], nxt[1], num=2)
-            zline = np.linspace(-curr[2], -nxt[2], num=2)
+            yline = np.linspace(curr[p1], nxt[p1], num=2)
+            zline = np.linspace(-curr[p2], -nxt[p2], num=2)
 
             ax.plot(yline, zline, 'gray')
         else:
-            ax.scatter(curr[1], -curr[2], c=['gray'])
-            ax.scatter(nxt[1], -nxt[2], c=['gray'])
+            ax.scatter(curr[p1], -curr[p2], c=['gray'])
+            ax.scatter(nxt[p1], -nxt[p2], c=['gray'])
 
     #plt.ylim([-100, 200])
     ax.set_xlabel('X Label')
